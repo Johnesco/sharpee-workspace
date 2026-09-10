@@ -1,0 +1,13 @@
+# Engine workspace repo: tooling only. Every game folder here is its own git repo
+# (published to johnesco.github.io/<game>/) and is ignored by this repo.
+/*
+!/.gitignore
+!/CLAUDE.md
+!/README.md
+!/tools/
+!/reference/
+
+# Local machine state
+.claude/settings.local.json
+__pycache__/
+*.pyc
