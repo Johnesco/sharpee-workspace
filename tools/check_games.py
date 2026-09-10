@@ -28,7 +28,10 @@ What it protects, and why:
             TypeScript game has src/index.ts.
   layout    a built game has theme-listener.js and game.js beside play.html,
             and ignores dist/ and node_modules/. A game still on the 0.9.x
-            browser/ layout is a WARN until build.py re-lays it.
+            browser/ layout is a WARN until build.py re-lays it. A folder that
+            already has play.html at the root and nothing to compile from is
+            `static` — a frozen published artifact, like the familyzoo-vNN
+            tutorial steps, where the built output *is* the repo.
   github    the sdlc-baseline issue and PR templates are vendored, the one
             category consumption.md says must be copied.
 """
@@ -216,7 +219,11 @@ def check_source(game: Path, r: Report) -> str:
     if (game / "browser" / "play.html").exists():
         r.warn("legacy layout with no src/index.ts; build.py can still re-lay browser/")
         return "legacy"
-    r.fail("no .story file, no src/index.ts, and no browser/play.html: nothing to build")
+    if (game / "play.html").exists():
+        r.ok("prebuilt layout: play.html at the root, nothing to build")
+        return "static"
+    r.fail("no .story file, no src/index.ts, no browser/play.html and no play.html: "
+           "nothing to build and nothing built")
     return "none"
 
 

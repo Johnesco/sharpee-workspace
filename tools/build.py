@@ -13,6 +13,10 @@ Modes, detected from the folder:
              --capture-world, then renders the stream (tools/tests_report.py).
     legacy   no .story, but browser/play.html from the old 0.9.x pipeline.
              Nothing is rebuilt; the existing output is re-laid at the root.
+    static   no .story and no browser/, but play.html already at the root: a
+             frozen published artifact where the built output *is* the repo
+             (the familyzoo-vNN tutorial steps). The contract is verified and
+             nothing is written.
 
 What it writes at the game root (the IF Hub contract, C:/code/ifhub/docs/publishing.md):
     play.html               the built index.html, titled, with theme-listener.js wired
@@ -305,8 +309,19 @@ def main() -> None:
             print(f"\n  Play locally:  python -m http.server 8000 --directory \"{game_dir}\"")
             print(f"  Ship to hub:   python C:/code/ifhub/tools/ship.py {game_dir.name}")
             return
-        fail("no .story file at the game root and no browser/play.html to re-lay. "
-             "TypeScript 5.x projects are not supported by this script yet.")
+        if (game_dir / "play.html").exists():
+            # A frozen published artifact: the built output *is* the repo. Nothing
+            # to compile, nothing to re-lay — verify the contract and report.
+            print(f"=== build {game_dir.name} (Sharpee, prebuilt static folder) ===")
+            missing = [n for n in ("play.html", "theme-listener.js") if not (game_dir / n).exists()]
+            if missing:
+                fail(f"prebuilt folder is missing {', '.join(missing)}")
+            print("  play.html and theme-listener.js present; nothing to build")
+            print(f"\n  Play locally:  python -m http.server 8000 --directory \"{game_dir}\"")
+            print(f"  Ship to hub:   python C:/code/ifhub/tools/ship.py {game_dir.name}")
+            return
+        fail("no .story file at the game root, no browser/play.html to re-lay, and no "
+             "prebuilt play.html. TypeScript 5.x projects are not supported by this script yet.")
 
     sid = story_id(story)
     build_dir = game_dir / "dist" / "web" / sid
