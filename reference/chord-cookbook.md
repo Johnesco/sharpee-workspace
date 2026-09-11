@@ -373,6 +373,104 @@ moves. (Hunt the Wumpus, 3.6.0, 2026-09-10)
 player walks into announces itself one line before it acts: "You can see wumpus
 here." (Hunt the Wumpus, 3.6.0, 2026-09-10)
 
+## Asking about the room the player is standing in
+
+There is no `the player's location is …` condition, so "how does this room
+compare" looks like one line per room. It is not. A condition that mentions `it`
+is **open** — a predicate over entities — and `any <condition>` asks whether
+anything satisfies it. Put the player in the condition and `any` finds the one
+room that is both in that state and holding the player:
+
+```chord
+define condition here-new: it is seen-once and the player is in it
+define condition here-again: it is seen-twice and the player is in it
+
+define action recalling
+  grammar
+    map
+    remember
+  phrase recall-new when any here-new
+  phrase recall-again when any here-again
+```
+
+Three lines instead of one per room per state. `no <condition>` is the negative
+form. Applying `any`/`no` to a *closed* condition (one that never says `it`) is
+`analysis.closed-condition-selection`, and testing an open one for plain truth is
+`analysis.open-condition-truth`. (Hunt the Wumpus, 3.6.0, 2026-09-11)
+
+## `after the player entering` does not fire for the starting room
+
+Being placed somewhere is not entering it. A room whose state is stepped on the
+way in stays on its initial state while the player stands in it at turn one,
+which reads as a bug and gates nothing. Seed it in `before the game starts`
+alongside whatever else that room needs. (Hunt the Wumpus, 3.6.0, 2026-09-11)
+
+## `move the player` is a silent no-op in a start block
+
+```chord
+before the game starts
+  change the player to the hunter
+  move the player to the Shambles      ## gate-clean, and does nothing
+  move the hunter to the Shambles      ## works
+end before
+```
+
+The first form passes every gate and leaves the character wherever `starts in`
+put them. If the same block is also placing hazards, they move and the player
+does not — which is how Hunt the Wumpus first started a playthrough already
+inside the slime pit. Name the character, not the role. (3.6.0, 2026-09-11)
+
+## `phrase detail` is prose, not layout
+
+A `detail` must carry a `while <condition>` (`analysis.detail-unconditional`:
+unconditional detail belongs in the description), it appends *inside* the
+description's paragraph, and it **silently drops `{br}`** — at the start of the
+text, in the middle, anywhere. So a detail can never be given a line of its own.
+
+Anything the player needs to find at a glance — an exit list, a readout — wants
+a header daemon instead, whose output is its own block:
+
+```chord
+  on every turn
+    phrase tunnels-cistern when the player is in the Cistern
+    ...
+  end on
+```
+
+A bare `on every turn` with no `while` is legal, and it correctly prints nothing
+on a turn the player dies, because the kill ends the turn first. (Hunt the
+Wumpus, 3.6.0, 2026-09-11)
+
+## Computed text, if a hatch is genuinely warranted
+
+Verified while building (and then removing) an ASCII map drawn from live world
+state. Useful the next time the language truly cannot say something:
+
+- `sharpee build` handles a hatch-bearing story — `hasHatches` selects a build
+  route rather than failing it, and the build prints a notice that the bundle now
+  carries author code.
+- A `define text` producer can read the world. Entities are enumerable by walking
+  the id space, which is **base 36** with a kind prefix (`r01`..`r0p` for 25 rooms,
+  `a02` an actor, `o01` an object) — `r10` does not exist, so a decimal probe stops
+  at `r09` and looks like a dead end. `entity.traits.room` carries `visited` and
+  `exits`; `world.getContainingRoom(id)` locates anything.
+- The prose pipeline collapses every run of whitespace. The exemption is on the
+  phrase: `{ kind: 'literal', whitespace: 'verbatim', text: … }`. That puts real
+  spaces in the DOM; the browser still needs `white-space: pre-wrap` from the
+  author stylesheet.
+- **Fixed-width text is a platform feature, but not from Chord.** `decorations.css`
+  ships an ADR-174 vocabulary — `sharpee-font-mono`, `sharpee-code`,
+  `sharpee-command`, plus colours, sizes, `center`, `indent`. The bracket spelling
+  `[font-mono:…]` in phrase text does **not** reach it at 3.6.0; it renders
+  literally in the terminal and the browser both. A hatch can attach it
+  structurally, and that does produce a real span:
+
+  ```ts
+  decorations: [{ className: 'sharpee-font-mono', content: [grid] }]
+  ```
+
+(3.6.0, 2026-09-11)
+
 ## Known limits
 
 - The direction set is closed: eight compass points plus up and down. But new direction *words* are easy: `extend action going` with bare-word patterns (`fore` / `means direction north`, `aft` / south, `port` / west, `starboard` / east, plus the `go fore` forms) compiled and played correctly in No Signal Home on 2026-09-08. Where there is no exit the engine still answers "You can't go that way."
