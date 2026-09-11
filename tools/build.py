@@ -184,6 +184,22 @@ def parse_ndjson(text: str) -> list[dict]:
 
 
 def write_walkthrough(game_dir: Path, doc: dict, records: list[dict]) -> None:
+    # A game may ship a full-coverage walkthrough that is deliberately wider
+    # than the tests document's main line: it visits every room and exercises
+    # every thing, including the refusals. When one is present it is the
+    # walkthrough, and the tests document stays the regression gate.
+    marker = game_dir / "walkthrough.coverage.json"
+    if marker.exists():
+        try:
+            meta = json.loads(marker.read_text(encoding="utf-8"))
+            print(f"  walkthrough: full-coverage ({meta.get('commands', '?')} commands, "
+                  f"{meta.get('rooms_swept', '?')}/{meta.get('rooms_total', '?')} rooms, "
+                  f"{meta.get('things_covered', '?')}/{meta.get('things_total', '?')} things) "
+                  "— kept, not regenerated from the tests document")
+        except json.JSONDecodeError:
+            print("  walkthrough: full-coverage marker present — kept")
+        return
+
     commands = main_line_commands(doc)
     if commands:
         (game_dir / "walkthrough.txt").write_text("\n".join(commands) + "\n", encoding="utf-8")
