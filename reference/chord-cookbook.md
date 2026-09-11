@@ -473,6 +473,20 @@ state. Useful the next time the language truly cannot say something:
 
 ## Known limits
 
+- **A finished story cannot be restarted from inside the client.** The engine
+  stops at `win` / `lose` / `kill the player`, and everything after that goes
+  through `executeTurn`, which throws `Engine is not running` — typed commands
+  **and the browser client's own File → Restart**, which does nothing at all. The
+  player is left getting a raw `[Error: Engine is not running]` on every keystroke
+  with no way back but reloading the page, and nothing on screen tells them so.
+  `RESTART` works fine *mid*-game ("The story restarts."). This affects every game
+  built here, `hello-chord` included, which is live on the hub. Verified in both
+  clients on 2026-09-11; the developer is aware and a fix is coming. Until it
+  lands, a game whose endings are easy to reach wants a line in its ending text
+  saying to reload — `wumpus-sharpee` carries one on all four endings, with the
+  removal steps in its CLAUDE.md deviations.
+
+
 - The direction set is closed: eight compass points plus up and down. But new direction *words* are easy: `extend action going` with bare-word patterns (`fore` / `means direction north`, `aft` / south, `port` / west, `starboard` / east, plus the `go fore` forms) compiled and played correctly in No Signal Home on 2026-09-08. Where there is no exit the engine still answers "You can't go that way."
 - No global action interceptor. A whole-room verb catcher exists only for death (`deadly:`); use an `on every turn while <condition>` daemon to nag instead of block.
 - Chord Writer records tests documents while you play, but it is macOS only. On Windows the document is written by hand; see `tests-document.md`.
