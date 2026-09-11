@@ -61,6 +61,22 @@ Verified against Sharpee 5.3.0 / Chord 3.6.0 on 2026-09-07 with `hello-chord/hel
 - `<entity>.<property> = <value>` / `!=`, and `<entity>.<collection> contains <item>` / `not-contains`, with a single-word entity head. `player.location = Bell Loft` and `player.inventory contains brass key` both pass.
 - The Chord-spelled form `[the] <name> is <state>` / `is not <state>`, using the story's own spelling of the name: `the red rope is pulled`, `the white rope is slack`.
 
+## Two things the table above gets wrong at 5.3.0
+
+- **`skip` is not a valid assertion family.** `"assertions": {"skip": true}`
+  fails the document reader with `unknown assertion family 'skip'`. And a card
+  with no `assertions` block at all fails too: *"command has no assertion — add
+  one, or declare an auto-assertion: policy (ADR-294 D2)."* To capture output
+  without claiming anything yet, give every card a trivially true assertion such
+  as `{"notContains": ["zzzqqqxxx"]}`, run with `--capture-output`, then write the
+  real assertions from what came back.
+- **`states` entity heads must be one word.** `wumpus.location = Crooked Stair`
+  passes; `slime pit.location = Dead Well` silently never matches, because the
+  head is two words. Multi-word *values* are fine. For a multi-word entity, use
+  the Chord-spelled form (`the slime pit is <state>`) instead.
+
+(Verified 2026-09-10 while writing `wumpus-sharpee.tests.json`.)
+
 ## Writing one by hand
 
 Chord Writer records the document as you play, but it is macOS only. On Windows:

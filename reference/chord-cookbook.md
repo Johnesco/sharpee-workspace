@@ -306,6 +306,73 @@ No Signal Home exercises most of what the language has. The forms below all comp
 - A free-text slot (`the code is a topic`, `the code takes the rest of the line`) parsed as an entity at runtime: `dial 739` answered "You can't see any such thing." Digits are not allowed in grammar patterns either. Guess the Verb dropped typed combinations and opens the safe from the known numbers.
 - `extend action going` with `head the direction` treated the direction as an entity; leave movement synonyms to the standard `going`.
 
+## `win` does not stop the clause
+
+A `win` (or `lose`, or `kill the player`) that fires conditionally does **not**
+halt the statements after it. They all still run, so a naive fallthrough prints
+after the ending:
+
+```
+> shoot east
+The arrow goes into the dark and something very large stops breathing.
+
+*** You have killed the wumpus ***
+
+The arrow clatters off bare rock. Somewhere, something wakes up.
+```
+
+Every statement after a conditional ending needs its own guard. Naming the
+condition twice (once positive for the `win`, once negated for the rest) works
+but duplicates a long predicate. Cheaper: have the winning case set a state, and
+key everything off the state.
+
+```chord
+  change the wumpus to shot when the player is in the Cave Mouth and the wumpus is in the Font
+  ...
+  win kill-wumpus when the wumpus is shot
+  phrase arrow-missed when not the wumpus is shot
+  move the wumpus to a random adjacent room when not the wumpus is shot
+```
+
+(Hunt the Wumpus, 3.6.0, 2026-09-10)
+
+## Advancing a one-way state ladder, written backwards
+
+Statements run in order, so stepping `states: sleeping, stirring, hunting` one
+stage per event has to be written from the far end back, or a sleeping thing
+advances twice in the same turn:
+
+```chord
+  change the wumpus to hunting when the wumpus is stirring
+  change the wumpus to stirring when the wumpus is sleeping
+```
+
+Forwards, the first line makes it `stirring` and the second immediately sees
+`stirring` and pushes it to `hunting`. (Hunt the Wumpus, 3.6.0, 2026-09-10)
+
+## Adjacency: no predicate, but there is a destination
+
+There is no adjacency condition — "is X next to Y", "the room north of here" —
+and the ADR names that a deliberate non-goal. But `move <thing> to a random
+adjacent room` **is** a statement, and works. So a wandering hazard is easy; a
+rule that reasons about the map is not, and the map, being hand-authored, is
+authoring-time data anyway. A room can name its own neighbours in a `detail`
+condition, and an action can carry one line per square of the map:
+
+```chord
+  phrase detail while the wumpus is in the Font or the wumpus is in the Sump:
+    Blood is smeared along the walls here.
+```
+
+Because the condition tests where the thing *is*, it stays correct when the thing
+moves. (Hunt the Wumpus, 3.6.0, 2026-09-10)
+
+## A thing in the room the player should not see listed
+
+`concealed` on a thing keeps it out of the room listing. Without it a hazard the
+player walks into announces itself one line before it acts: "You can see wumpus
+here." (Hunt the Wumpus, 3.6.0, 2026-09-10)
+
 ## Known limits
 
 - The direction set is closed: eight compass points plus up and down. But new direction *words* are easy: `extend action going` with bare-word patterns (`fore` / `means direction north`, `aft` / south, `port` / west, `starboard` / east, plus the `go fore` forms) compiled and played correctly in No Signal Home on 2026-09-08. Where there is no exit the engine still answers "You can't go that way."

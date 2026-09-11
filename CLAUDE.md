@@ -6,6 +6,11 @@ This directory holds every Sharpee-engine interactive fiction project authored b
 - `hello-chord/` — Chord reference project (2026-09-07). Four rooms, one puzzle, a tests document, and the first game shipped to IF Hub through this workspace's `tools/build.py`. Copy its layout for new games.
 - `no-signal-home-sharpee/` — the flagship. Chord edition migrated to 3.6.0 on 2026-09-08 under its ticket #32: full map, Act 1 with all five opening outcomes, NPC topics, two endings. TypeScript edition and the 3.0.0 draft in `legacy/`. Shipped to IF Hub 2026-09-08 (repo renamed to `no-signal-home-sharpee` to match). Three endings and the cargo/cryo gates remain on its board; nautical direction input is the open language gap.
 - `fever-dream-sharpee/`, `guess-the-verb-sharpee/` — translated to Chord on 2026-09-08 and shipped to IF Hub; each keeps its TypeScript edition in `legacy/` until the Chord edition has been played through in the browser.
+- `wumpus-sharpee/` — Hunt the Wumpus (2026-09-10). Sixteen rooms on a grid, randomised
+  hazards, directional shooting, five endings. Built and gate-clean, not yet shipped. Its
+  `package.json` pins the whole `@sharpee/*` scope with npm `overrides`, because 5.3.1 is
+  broken for npm consumers and pinning only the direct dependencies leaves 25 transitive
+  packages resolving to it.
 - `sample-sharpee/` — Chord twin of the Inform 7 "Sample" in `C:/code/text-games/i7/sample/`, translated 2026-09-08 for engine comparison.
 - `sharpee-sound-test/` — TypeScript audio diagnostic pinned to 0.9.111, frozen, not a git repo. The build script's legacy mode re-lays its `browser/` output at the root if it is ever shipped.
 - `website/` — dead. It mirrored the fork's Astro site and the fork is gone. Delete when convenient.
