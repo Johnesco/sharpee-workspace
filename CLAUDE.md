@@ -6,17 +6,14 @@ This directory holds every Sharpee-engine interactive fiction project authored b
 - `hello-chord/` — Chord reference project (2026-09-07). Four rooms, one puzzle, a tests document, and the first game shipped to IF Hub through this workspace's `tools/build.py`. Copy its layout for new games.
 - `no-signal-home-sharpee/` — the flagship. Chord edition migrated to 3.6.0 on 2026-09-08 under its ticket #32: full map, Act 1 with all five opening outcomes, NPC topics, two endings. TypeScript edition and the 3.0.0 draft in `legacy/`. Shipped to IF Hub 2026-09-08 (repo renamed to `no-signal-home-sharpee` to match). Three endings and the cargo/cryo gates remain on its board; nautical direction input is the open language gap.
 - `fever-dream-sharpee/`, `guess-the-verb-sharpee/` — translated to Chord on 2026-09-08 and shipped to IF Hub; each keeps its TypeScript edition in `legacy/` until the Chord edition has been played through in the browser.
-- `wumpus-sharpee/` — Hunt the Wumpus (story 0.3.0, 2026-09-11). 25 rooms on a 5x5
+- `wumpus-sharpee/` — Hunt the Wumpus (story 0.3.2, 2026-09-12). 25 rooms on a 5x5
   lattice with tunnels cut and diagonal shafts added; one wumpus, one pit, one arrow,
   and a miss is fatal. The topology is machine-checked for connectivity, degree, unique
   warning signatures and winnability before the story is emitted. Built and gate-clean,
-  played in a browser, **not yet shipped**. Two things to know before touching it: its
-  `package.json` pins the whole `@sharpee/*` scope with npm `overrides`, because 5.3.1
-  is broken for npm consumers and pinning only the direct dependencies still leaves 25
-  transitive packages on it; and a `walkthrough.coverage.json` must never appear at its
-  root, because a room-sweeping walkthrough cannot survive a cave where two rooms kill
-  you. Its `docs/spike-findings.md` is the fullest record in this workspace of what
-  Chord 3.6.0 does and does not do.
+  played in a browser, **not yet shipped**. Its `docs/spike-findings.md` is the fullest
+  record in this workspace of what Chord does and does not do. One thing to know before
+  touching it: a `walkthrough.coverage.json` must never appear at its root, because a
+  room-sweeping walkthrough cannot survive a cave where two rooms kill you.
 - `sample-sharpee/` — Chord twin of the Inform 7 "Sample" in `C:/code/text-games/i7/sample/`, translated 2026-09-08 for engine comparison.
 - `sharpee-sound-test/` — TypeScript audio diagnostic pinned to 0.9.111, frozen, not a git repo. The build script's legacy mode re-lays its `browser/` output at the root if it is ever shipped.
 - `website/` — dead. It mirrored the fork's Astro site and the fork is gone. Delete when convenient.
