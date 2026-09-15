@@ -9,8 +9,8 @@ This directory holds every Sharpee-engine interactive fiction project authored b
 - `wumpus-sharpee/` — Hunt the Wumpus (story 0.3.2, 2026-09-12). 25 rooms on a 5x5
   lattice with tunnels cut and diagonal shafts added; one wumpus, one pit, one arrow,
   and a miss is fatal. The topology is machine-checked for connectivity, degree, unique
-  warning signatures and winnability before the story is emitted. Built and gate-clean,
-  played in a browser, **not yet shipped**. Its `docs/spike-findings.md` is the fullest
+  warning signatures and winnability before the story is emitted. Built, gate-clean and
+  **shipped 2026-09-15** (repo `Johnesco/wumpus-sharpee`, live on the hub). Its `docs/spike-findings.md` is the fullest
   record in this workspace of what Chord does and does not do. One thing to know before
   touching it: a `walkthrough.coverage.json` must never appear at its root, because a
   room-sweeping walkthrough cannot survive a cave where two rooms kill you.
