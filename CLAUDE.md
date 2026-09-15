@@ -60,6 +60,8 @@ Each game holds only what must be local: `CLAUDE.md` from `tools/templates/` (id
 
 `build.py` lays the hub contract out at the game root: `play.html` (the built page, titled, `theme-listener.js` wired), `game.js` and the CSS, wired themes under `lib/themes/` (the hub's Pages workflow deploys `lib/`, not `themes/`), the `.story` itself fetched raw and highlighted by the hub (its Chord highlighter landed 2026-09-09; no `source.html`, no `sourceBrowser`), `tests.html`, `walkthrough.txt`, `walkthrough_output.txt`. Contract: `C:/code/ifhub/docs/publishing.md`. Preview: the `hub-site` launch config, then `http://127.0.0.1:8892/ifhub/app.html?game=<game>`.
 
+**Where a change belongs.** A game owns how it plays; the hub owns how it ships. Story, tests, engine version, and this folder's own docs are the game's business. Anything that would force more than one game repo to move — a new `ifhub.conf` key, a new source extension, what the hub renders, what `ship.py` or `publish.py` write into a game folder — is a hub decision: ticket it in `Johnesco/ifhub` and do not change the contract from here. See "Who decides what" in `C:/code/ifhub/docs/sdlc.md`.
+
 Known gap: the hub's Pages workflow copies only `web lib assets audio sfx src` plus root files by extension (`.story` included since 2026-09-09), so flat media a Chord build lays beside the page will not deploy until the template in `ifhub/tools/publish.py` learns about it. No game here has media yet.
 
 `ifhub.conf` for a Chord game: `engine = sharpee`, `title`, `author`, `description`, `tags`, `source = <id>.story`, `sourceLabel`, `walkthrough = walkthrough.txt`, `hub = no` (ship flips it). The old `binary = dist/web` line is ignored by the hub.
