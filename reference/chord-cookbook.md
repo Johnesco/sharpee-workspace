@@ -307,7 +307,8 @@ All three re-checked against engine 5.4.1 on 2026-09-16 (Chord 3.6.0).
 
 - Per-entity `phrase taking-fixed-in-place:` (and the other standard-message aliases) inside a `create` block passed the gates and never changed the output. Use `on the player taking` / `refuse desk-heavy` with your own phrase instead.
 - A free-text slot (`the code is a topic`, `the code takes the rest of the line`) never reaches the action body. At engine 5.3.0 it was parsed as an entity (`dial 739` answered "You can't see any such thing."); at 5.4.1 both forms answer "You can't do that." whatever is typed. An entity slot (`poke the target`) runs its body normally, so it is these two slot types that fail, not slots. Digits are not allowed in grammar patterns either. Guess the Verb dropped typed combinations and opens the safe from the known numbers.
-- `extend action going` with `head the direction` treated the direction as an entity; leave movement synonyms to the standard `going`.
+- `extend action going` with `head the direction` treated the direction as an entity. Only the *slot* fails: literal patterns with `means direction <dir>` work (see "Movement synonyms" above). Guess the Verb carries thirty of them — `head/walk/proceed <dir>` for all six, plus `upstairs`, `downstairs`, `ascend`, `descend`, `climb stairs` — and each one moves the player. (2026-09-17)
+- `means target <alias>` on a pattern of a *non-going* action compiles and does nothing: bare `dig` with `means target bed` still answered "Dig what?". `means` appears to be wired for the going rules' direction only. (Guess the Verb, engine 5.4.1, 2026-09-17)
 
 ## `win` does not stop the clause
 
@@ -508,6 +509,58 @@ Engine 5.4.1, Chord 3.6.0; transcripts in `dungeo-sharpee/docs/translation-notes
 - **Counting what the player carries works:** a story counter reset in a header daemon, then `each carried-item / raise baggage by 1 / end each` over `define condition carried-item: the adventurer holds it`. `holds` counts direct contents only, so a full sack counts once. Exits can then read it: `up is blocked while baggage > 2: too-much`.
 - **One direction can carry several blocked lines**; the first whose condition holds speaks. Order them from most specific to least.
 - **A `light-source` that is never switched** (a torch that is always lit) lights the room from a hand or the floor, but `is lit` reads false for it. Test where it is instead. Switching off another lamp while carrying it still prints "plunging the area into darkness", though the room stays lit.
+
+## `override message`, and what it will not reach (Guess the Verb, 2026-09-17)
+
+Chord's answer to Inform 7's `printing a parser error` activity. Engine 5.4.1, Chord 3.6.0.
+
+- **The catalog is closed and action-scoped.** `override message <alias>` validates against
+  `MESSAGE_OVERRIDE_ALIASES` — 742 aliases across 58 standard actions
+  (`@sharpee/chord/message-alias-catalog.js`). A misspelling is
+  `analysis.unknown-message-alias` with a nearest-match suggestion, so the gate teaches the
+  names. `override messages <locale>` takes a whole block of `alias: text` entries instead.
+- **True parser errors are outside it.** `parser.error.unknownVerb`,
+  `parser.error.entityNotFound` and their siblings
+  (`@sharpee/lang-en-us/data/messages.js:24-67`), and the `core.entity_not_found` /
+  `core.command_failed` fallbacks (`language-provider.js:69-82`), have no alias. "I don't
+  understand that." and the bare "You can't see any such thing." **cannot be reworded from
+  Chord.** A game that wants fewer of them has to push work down a layer: more `aka` nouns
+  and more grammar patterns, so the parser is reached less often.
+- **Only the simple template forms substitute.** `{You}`, `{can't}`, `{have}`, `{are}`,
+  `{find}`, `{the item}`, `{the target}` all resolve. `{capitalize the item}` and
+  `{verb:is item}` — both of which appear in the stdlib's own defaults — print **literally**,
+  braces and all. Copy a default message as your starting point and you will ship
+  `{capitalize the item} {verb:is item} fixed in place.` to the player. Rewrite around them.
+- **A multi-variant override does not substitute at all.** With `, first-time` (or any
+  strategy) and `or`-separated variants, *every* `{…}` printed literally, in both variants.
+  One variant per override until this is fixed.
+
+## An action body carries requirements and mutations (Guess the Verb, 2026-09-17)
+
+A `define action` body is not limited to `phrase <key>`. This whole block is gate-clean and
+runs, which is how a bare verb gets real behaviour without a target to hang a trait on:
+
+```
+define action digging-here
+  grammar
+    dig
+    dig here
+  the player must be in the Garden: dig-nothing
+  refuse when the flower bed is dug: dig-already
+  the player must hold the garden trowel: dig-need-tool
+  change the flower bed to dug
+  move the brass mechanism to the Garden
+  award mechanism-found
+  phrase dig-here-found
+```
+
+The `refuse`-before-`change` ordering rule still applies. This is the Chord answer to I7's
+"bare verbs need a separate action applying to nothing, with location-based context".
+
+Note the scope trap on hint actions: a slot only matches something **in scope**, so
+`go to the target` never fires for `go to kitchen` (the Kitchen is not in scope from the
+porch) — it falls through to the parser instead. Name the real destinations as literal
+patterns and keep the slot form as a fallback.
 
 ## Known limits
 
