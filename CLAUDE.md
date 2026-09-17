@@ -4,7 +4,7 @@ This directory holds every Sharpee-engine interactive fiction project authored b
 
 **Games:**
 - `hello-chord/` — Chord reference project (2026-09-07). Four rooms, one puzzle, a tests document, and the first game shipped to IF Hub through this workspace's `tools/build.py`. Copy its layout for new games.
-- `no-signal-home-sharpee/` — the flagship. Chord edition migrated to 3.6.0 on 2026-09-08 under its ticket #32: full map, Act 1 with all five opening outcomes, NPC topics, two endings. TypeScript edition and the 3.0.0 draft in `legacy/`. Shipped to IF Hub 2026-09-08 (repo renamed to `no-signal-home-sharpee` to match). Three endings and the cargo/cryo gates remain on its board; nautical direction input is the open language gap.
+- `no-signal-home-sharpee/` — the flagship. Chord edition migrated to 3.6.0 on 2026-09-08 under its ticket #32: full map, Act 1 with all five opening outcomes, NPC topics, two endings. TypeScript edition and the 3.0.0 draft in `legacy/`. Shipped to IF Hub 2026-09-08 (repo renamed to `no-signal-home-sharpee` to match). Three endings and the cargo/cryo gates remain on its board; nautical direction input landed 2026-09-08 (its #34).
 - `fever-dream-sharpee/`, `guess-the-verb-sharpee/` — translated to Chord on 2026-09-08 and shipped to IF Hub; each keeps its TypeScript edition in `legacy/` until the Chord edition has been played through in the browser.
 - `wumpus-sharpee/` — Hunt the Wumpus (story 0.3.2, 2026-09-12). 25 rooms on a 5x5
   lattice with tunnels cut and diagonal shafts added; one wumpus, one pit, one arrow,
@@ -22,9 +22,9 @@ The old `oldzoo/` tutorial project is gone; its archive is `C:/code/familyzoo-fi
 
 ---
 
-## Toolchain (verified 2026-09-07)
+## Toolchain (verified 2026-09-16)
 
-- Engine: `@sharpee/*` **5.3.0** on npm. Language: **Chord 3.6.0**. `@sharpee/devkit` owns the `sharpee` command: `init`, `build`, `publish`, `compose --check`, `test`, `play`, `introspect`, `ifid`.
+- Engine: `@sharpee/*` **5.4.1** on npm. Language: **Chord 3.6.0**. The two are versioned separately; what an engine bump touches in a game is in `reference/chord-cookbook.md` ("Moving a game to a new engine release"). `@sharpee/devkit` owns the `sharpee` command: `init`, `build`, `publish`, `compose --check`, `test`, `play`, `introspect`, `ifid`.
 - Install once for scaffolding: `npm install -g @sharpee/devkit`. Every scaffolded game pins its own devkit and engine; inside a game folder `npx sharpee` uses the pinned copy.
 - `sharpee init <name> -y` scaffolds a Chord project (`<id>.story`, `<id>.config.json` with the IFID, `package.json`, `src/browser-entry.ts`, `browser/<id>.css`, `assets/`, `feelies/`). `--ts` scaffolds TypeScript.
 - Docs: the Chord guide and grammar reference at https://sharpee.net/chord/ are the source of truth. The upstream repo (https://github.com/ChicagoDave/sharpee) keeps the ADRs (214–331 cover Chord) and `packages/chord/chord.ebnf`. The old read-only clone at `C:/code/fork/sharpee` **no longer exists**; nothing here should depend on it.
@@ -62,7 +62,7 @@ Each game holds only what must be local: `CLAUDE.md` from `tools/templates/` (id
 
 **Where a change belongs.** A game owns how it plays; the hub owns how it ships. Story, tests, engine version, and this folder's own docs are the game's business. Anything that would force more than one game repo to move — a new `ifhub.conf` key, a new source extension, what the hub renders, what `ship.py` or `publish.py` write into a game folder — is a hub decision: ticket it in `Johnesco/ifhub` and do not change the contract from here. See "Who decides what" in `C:/code/ifhub/docs/sdlc.md`.
 
-Known gap: the hub's Pages workflow copies only `web lib assets audio sfx src` plus root files by extension (`.story` included since 2026-09-09), so flat media a Chord build lays beside the page will not deploy until the template in `ifhub/tools/publish.py` learns about it. No game here has media yet.
+Known gap: the hub's Pages workflow copies only `web lib assets audio sfx src` plus root files by extension (`.story` included since 2026-09-09), so flat media a Chord build lays beside the page will not deploy until the template in `ifhub/tools/publish.py` learns about it. Sound is unaffected: the build keeps it in `sfx/`, which deploys, and Fever Dream's sounds are live. A `feelies/` folder does not deploy; `assets/` does.
 
 `ifhub.conf` for a Chord game: `engine = sharpee`, `title`, `author`, `description`, `tags`, `source = <id>.story`, `sourceLabel`, `walkthrough = walkthrough.txt`, `hub = no` (ship flips it). The old `binary = dist/web` line is ignored by the hub.
 

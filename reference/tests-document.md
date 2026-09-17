@@ -4,7 +4,7 @@ A Chord game is tested by replaying **`<id>.tests.json`**, which sits beside the
 
 `.transcript` files are refused by name for Chord projects. The transcript standard still applies to the 0.9.x TypeScript games.
 
-Verified against Sharpee 5.3.0 / Chord 3.6.0 on 2026-09-07 with `hello-chord/hello-chord.tests.json` (19 cards, 33 assertions).
+Verified against Sharpee 5.3.0 / Chord 3.6.0 on 2026-09-07, and again against Sharpee 5.4.1 on 2026-09-16, with `hello-chord/hello-chord.tests.json` (19 cards, 33 assertions).
 
 ## Shape
 
@@ -53,29 +53,38 @@ Verified against Sharpee 5.3.0 / Chord 3.6.0 on 2026-09-07 with `hello-chord/hel
 | `states` | world facts after the turn (grammar below) | `"states": ["the red rope is pulled"]` |
 | `events` | event types emitted this turn | `"events": ["if.event.opened"]` |
 | `channels` | channel values by dotted id, `is` or `contains` | `{ "id": "info.title", "is": "Hello Chord" }` |
-| `skip` | run the command, assert nothing | `"skip": true` |
 
 `states` strings, tried in this order (from the ADR-307 addendum, 2026-09-03):
 
 - `story.state = <state>` / `!=`: the story's own `states:` phase.
-- `<entity>.<property> = <value>` / `!=`, and `<entity>.<collection> contains <item>` / `not-contains`, with a single-word entity head. `player.location = Bell Loft` and `player.inventory contains brass key` both pass.
+- `<entity>.<property> = <value>` / `!=`, and `<entity>.<collection> contains <item>` / `not-contains`, with a single-word entity head. `player.location = Bell Loft` and `player.inventory contains brass key` both pass. A one-word `aka` alias serves as the head for a thing whose name is longer: `desk.location = Hall` for `the stone desk`, aka desk.
 - The Chord-spelled form `[the] <name> is <state>` / `is not <state>`, using the story's own spelling of the name: `the red rope is pulled`, `the white rope is slack`.
 
-## Two things the table above gets wrong at 5.3.0
+## Where the runner parts from ADR-307
 
-- **`skip` is not a valid assertion family.** `"assertions": {"skip": true}`
-  fails the document reader with `unknown assertion family 'skip'`. And a card
-  with no `assertions` block at all fails too: *"command has no assertion — add
+- **There is no `skip` family**, though ADR-307 lists one. `"assertions": {"skip": true}`
+  fails the document reader (exit 2) with `unknown assertion family 'skip'`. And a
+  card with no `assertions` block at all fails too (exit 1): *"command has no assertion — add
   one, or declare an auto-assertion: policy (ADR-294 D2)."* To capture output
   without claiming anything yet, give every card a trivially true assertion such
   as `{"notContains": ["zzzqqqxxx"]}`, run with `--capture-output`, then write the
   real assertions from what came back.
 - **`states` entity heads must be one word.** `wumpus.location = Crooked Stair`
-  passes; `slime pit.location = Dead Well` silently never matches, because the
-  head is two words. Multi-word *values* are fine. For a multi-word entity, use
-  the Chord-spelled form (`the slime pit is <state>`) instead.
+  passes; `slime pit.location = Dead Well` fails, because the head is two words.
+  At 5.3.0 it failed silently; at 5.4.1 it says so: *"Could not parse expression:
+  slime pit.location = Dead Well"*. Multi-word *values* are fine. For a
+  multi-word entity, use a one-word `aka` alias as the head, or the Chord-spelled
+  form (`the slime pit is <state>`).
+- **Cards after an ending run against a stopped engine.** Every command after a
+  `win`, `lose` or `kill the player` records `Error: Cannot executeTurn() … The
+  game has ended`, with no turn number, and a `notContains` check still passes on
+  it. So a document that ends the game too early can go on passing on weak
+  assertions — which is why the trivially true capture trick above is for
+  drafting only. Give the turn after anything that might end the story a
+  `contains` check.
 
-(Verified 2026-09-10 while writing `wumpus-sharpee.tests.json`.)
+(Found 2026-09-10 while writing `wumpus-sharpee.tests.json`; re-checked against
+Sharpee 5.4.1 on 2026-09-16.)
 
 ## Writing one by hand
 
@@ -113,7 +122,7 @@ The report is the Inform 7 report's shape (ifPlayer's class names, so the hub's 
 3. **Checks** — every assertion with its verdict and the runner's message when it failed; **show** highlights what a `contains` or `exact` check matched in the prose, and a failed `notContains` highlights the offending text; then the world after the turn.
 4. **Raw** — the NDJSON record and the authored card, pretty-printed.
 
-Controls: expand all, collapse all, failures only, and a filter that matches anything a card holds (raw records included) and opens the cards it finds. To rebuild the page from a saved stream without rebuilding the game: `python tools/tests_report.py run.ndjson <id>.tests.json -o tests.html --title "Title" --version "Sharpee 5.3.0"`.
+Controls: expand all, collapse all, failures only, and a filter that matches anything a card holds (raw records included) and opens the cards it finds. To rebuild the page from a saved stream without rebuilding the game: `python tools/tests_report.py run.ndjson <id>.tests.json -o tests.html --title "Title" --version "Sharpee 5.4.1"`.
 
 ## When a card fails after a story edit
 

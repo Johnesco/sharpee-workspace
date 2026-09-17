@@ -1,6 +1,6 @@
 # Chord cookbook
 
-Lessons that are true in this workspace and are not spelled out, or not spelled out plainly, in the upstream guide. The upstream guide at https://sharpee.net/chord/ and its grammar reference are the language's source of truth; this file is what we learned by compiling games here. Every entry says when it was verified and against which Chord version, so a stale entry is easy to spot.
+Lessons that are true in this workspace and are not spelled out, or not spelled out plainly, in the upstream guide. The upstream guide at https://sharpee.net/chord/ and its grammar reference are the language's source of truth; this file is what we learned by compiling games here. Every entry says when it was verified and against which Chord version, so a stale entry is easy to spot. The language version is not enough on its own: Chord stayed 3.6.0 from engine 5.3.0 to 5.4.1 while engine behaviour under it changed, so an entry re-checked since then also names the engine version. On 2026-09-16 every entry recording a limitation — something that does not work, or works surprisingly — was re-checked against engine 5.4.1; the entries describing working behaviour come from games that still pass their tests on 5.4.1.
 
 `hello-chord/hello-chord.story` is the worked example for most of this.
 
@@ -129,6 +129,7 @@ create the white rope
 - `states: slack, pulled` is one-way: a state can only move forward through the list. Add `, reversible` to go back. Reverting an irreversible state is `analysis.irreversible-state`.
 - A state names what a thing *is*. Boolean pairs (`lit, unlit`) and negations are refused by `analysis.boolean-state` and `analysis.negated-state`. Put the fact on a thing you can examine instead: the thrusters are `cold` or `burned`, not `braked` true or false.
 - Conditions: `when the red rope is pulled`, `while the fountain is flowing`, `the player has the key`, `the player is in the Nave`, `and`, `or`, `not`, parentheses.
+- Four words cannot be state names, although `states:` accepts them: `fresh`, `recent` and `stale` are recency words and `concluded` is a thread word (ADR-320). Standing alone at the end of a condition or before `and`/`or`, `the Hall is fresh` is read as that predicate rather than a state check, and it fails when the rule runs: *"`recency` needs an owner (`it`) in scope — it holds only inside an entity's own rows."* Seen with `fresh`; the grammar gives the other three the same reading. No game here uses any of them. (Chord 3.6.0, engine 5.4.1, 2026-09-16)
 
 ## Text
 
@@ -169,7 +170,7 @@ The player is a role assigned in exactly one `before the game starts` block. `cr
 ## Scoring and endings
 
 - `use scoring` in the header; `score <name> worth N` on the thing or room that owns the points; `award <name>` in a rule. Awards are idempotent, so awarding twice counts once. SCORE prints "You have scored 10 out of 20, earning you the rank of a Sexton."
-- `win <phrase>` inside an `on` clause ends the story after the phrase and the final rank announcement. The engine stops taking input; a piped `sharpee play` prints "Engine is not running" for anything after.
+- `win <phrase>` inside an `on` clause ends the story after the phrase and the final rank announcement. After that only the meta commands work. RESTART starts a fresh game; anything else, in a piped `sharpee play` and in `sharpee test` alike, answers `Error: Cannot executeTurn(): the engine is in the 'stopped' phase … The game has ended; only meta commands (RESTART, RESTORE, QUIT, UNDO) are accepted`. (Engine 5.4.1, 2026-09-16)
 
 ## Story verbs live in traits, not on entities
 
@@ -235,14 +236,14 @@ Sequence steps are `at turn <n>`, `<n> turns later` (always "turns", even for 1)
 ## Containers, keys, and things out of play
 
 - `scenery, a container, openable, lockable with the brass key` starts closed but **unlocked**. Add `starts locked` for a cabinet the key must open. Doors do start locked.
-- A thing created with no `in`/`on` line is out of play until a rule moves it: `move the trapdoor to the Corridor`, `move the brass key to the Patient` (into a person's inventory). That is the way to conceal something Chord has no flag for. Such a thing lists without an article until it has been placed somewhere ("a pipe wrench, brass key"); cosmetic, still open.
+- A thing created with no `in`/`on` line is out of play until a rule moves it: `move the trapdoor to the Corridor`, `move the brass key to the Patient` (into a person's inventory). That is the way to conceal something Chord has no flag for. Moved straight into a carrier, such a thing lists without its article: Fever Dream's inventory reads "a pipe wrench, brass key". Moved into a room first, it lists normally ("You can see a brass key here."). Cosmetic, and still open at engine 5.4.1 (2026-09-16).
 - Chord cannot rename an entity. Carry a transformed name as an `aka` alias.
 
 ## Small syntax that bites
 
-- A room whose name has no article (`create Cold Storage`) cannot be a placement target: `in Cold Storage` is read as a trait line. Give rooms the article (`create the Cold Storage`) and use it everywhere.
-- A `##` comment needs a blank line before and after it.
-- Media: `define sound glass-break from "sfx/glass.ogg"` with the file at `assets/sfx/glass.ogg`. The build keeps the `sfx/` folder beside the page, and the hub's Pages workflow deploys `sfx/`, so no layout tricks are needed for sound. Play with `play sound glass-break when client has sound`; a region's `after the player entering` / `after the player leaving` pair carries `play ambient` / `stop ambient`.
+- A room whose name has no article (`create Cold Storage`) cannot be a placement target: `in Cold Storage` is read as a trait line (`analysis.trait-not-declared`: *"Trait `in cold storage` is not declared"*). Give rooms the article (`create the Cold Storage`) and use it everywhere.
+- A `##` comment needs a blank line before and after it (`lex.comment-blank-lines`).
+- Media: `define sound glass-break from "sfx/glass.ogg"` with the file at `assets/sfx/glass.ogg`. The build keeps the `sfx/` folder beside the page, and the hub's Pages workflow deploys `sfx/`, so no layout tricks are needed for sound: Fever Dream's three sounds are live on the hub this way (checked 2026-09-16). Play with `play sound glass-break when client has sound`; a region's `after the player entering` / `after the player leaving` pair carries `play ambient` / `stop ambient`.
 
 ## What the standard library already has (3.6.0)
 
@@ -253,11 +254,11 @@ A story verb whose pattern restates a standard one wins for every target: `turn 
 ## Refusal, mutation, and the one order they may come in
 
 - `refuse` lines must precede every `change`, `move`, `set`, and `award` in a clause (`analysis.refusal-after-mutation`). A clause either refuses or mutates; it cannot do the work and then stop the standard action.
-- `refuse when not …` is not a form. State the requirement positively: `the player must hold the garden trowel: dig-need-tool`, `it must hold the clock spring: wind-missing-spring`, `the player must be in the Garden: dig-nothing`.
-- When the standard action refuses after your `on` clause ran (a scenery thing being taken or pushed without the matching trait), everything the clause did is discarded, text included. To let a standard verb mutate the world, the action has to commit: give the thing the trait (`pushable`, `pullable`, `climbable`, `diggable with the tool`) or make it portable and act in `after`. The doormat in Guess the Verb is portable so that `take mat` commits; its `after the player taking` reveals the key, awards the point, and moves the mat back.
+- `refuse when not …` is not a form (`analysis.negated-requirement`). State the requirement positively: `the player must hold the garden trowel: dig-need-tool`, `it must hold the clock spring: wind-missing-spring`, `the player must be in the Garden: dig-nothing`. Plain `refuse when <condition>: key` is legal; in the gate's own words it is "for hazards that are present", not requirements that are missing. (Engine 5.4.1, 2026-09-16)
+- When the standard action refuses after your `on` clause ran (a scenery thing being taken or pushed without the matching trait), everything the clause did is discarded, text included. To let a standard verb mutate the world, the action has to commit: give the thing the trait (`pushable`, `pullable`, `climbable`, `diggable with the tool`) or make it portable and act in `after`. The doormat in Guess the Verb is portable so that `take mat` commits; its `after the player taking` reveals the key, awards the point, and moves the mat back. (Re-checked against engine 5.4.1, 2026-09-16: a scenery boulder's `on the player pushing` changed its state and spoke, and after "The boulder is fixed in place." neither had happened.)
 - An `on` clause that speaks replaces the standard action's own text for that turn; a clause that only mutates lets the standard text print. `search overcoat` printed only the story's line.
 - `it` is only a word inside `define trait`. In a `create` block, name the thing.
-- The player cannot be made to act (`the player opens the trunk` is `analysis.act-player-actor`), and `set the trunk to open` is not a form. A container the story wants "unlocked" by an event is a state (`latched`, `released`) gated in `on the player opening`; the player still types OPEN.
+- The player cannot be made to act (`the player opens the trunk` is `analysis.act-player-actor` in a reaction, and `analysis.act-in-intercept` in an action body, where no character may act), and `set the trunk to open` is not a form (`analysis.unknown-entity`: it reads `open` as a thing). (Engine 5.4.1, 2026-09-16) A container the story wants "unlocked" by an event is a state (`latched`, `released`) gated in `on the player opening`; the player still types OPEN.
 - Scores awarded from more than one place, or from a trait or action body, belong in the story header (`score iron-key worth 1` under `use scoring`). A score declared on an entity is only awardable from that entity's own clauses.
 
 ## Movement synonyms, and winning on a score
@@ -271,7 +272,7 @@ extend action going
       means direction up
 ```
 
-A `means <key> <value>` line under a pattern sets that pattern's semantic default, which is how the standard going rules carry their direction. Twelve literal patterns cover `head` and `proceed` for the six directions; a slot (`head the direction`) does not work. (Sample, 2026-09-08)
+A `means <key> <value>` line under a pattern sets that pattern's semantic default, which is how the standard going rules carry their direction. Twelve literal patterns cover `head` and `proceed` for the six directions; a slot (`head the direction`) does not work, and still does not at engine 5.4.1: HEAD EAST answers "You can't see any such thing." (Sample, 2026-09-08; re-checked 2026-09-16)
 
 Chord has no score condition, so a game that wins "when the score reaches 10" gives each scored discovery a state and checks them in a header daemon:
 
@@ -283,7 +284,7 @@ Chord has no score condition, so a game that wins "when the score reaches 10" gi
 
 It fires on the turn the last one flips, after that turn's own text, which is what Inform's every-turn rule did. (Sample)
 
-`use the item on the other` cannot be an `extend action unlocking` line: the first noun binds as the action's target whatever the slot is called, so the key becomes the thing being unlocked. Keep USE as a hint action. A plain thing can be `openable` on its own (a journal); OPEN then commits, `after the player opening` awards and speaks, and READ carries the same passage through `on the player reading`.
+`use the item on the other` cannot be an `extend action unlocking` line: the first noun binds as the action's target whatever the slot is called, so the key becomes the thing being unlocked (USE KEY ON DOOR: "The iron key can't be unlocked." — still so at engine 5.4.1, 2026-09-16). Keep USE as a hint action. A plain thing can be `openable` on its own (a journal); OPEN then commits, `after the player opening` awards and speaks, and READ carries the same passage through `on the player reading`.
 
 ## Clocks, regions, NPCs, and the rest of the toolbox (No Signal Home)
 
@@ -294,16 +295,18 @@ No Signal Home exercises most of what the language has. The forms below all comp
 - **A daemon that nags.** `on every turn while the proximity alarm is screaming / phrase alarm-nag` in the header, with `define phrase alarm-nag, cycling … or … or … end phrase` rotating three lines. This is the Chord stand-in for a global action interceptor, which the language does not have.
 - **People.** `a person, proper, passive` / `guard` / `wanderer with move-chance 30`, `pronouns she`, a `states:` line for their arc, and `define topics for <name> / about "the cargo", "the hold": phrase <key> / end topics` for ASK. A guard announces "Okafor blocks your way!"; a wanderer follows and "notices you".
 - **Doors and openings.** A door between rooms is `a door` named on both rooms' exit lines (`through the pressure hatch`). One that should stand open needs `openable` and `starts open`, and the gate then lives on the room (`south is blocked while the docking controls is not sealed: key`). A keyed door is `a door, lockable with the <key>` and starts locked; a keyed container needs `starts locked` as well.
-- **Scenery that reads.** `readable` alone prints "The sign reads:" and nothing else. Give it `on the player reading / phrase <key>` with the text.
+- **Scenery that reads.** `readable` alone prints "The sign reads:" and nothing else. Give it `on the player reading / phrase <key>` with the text. (Still so at engine 5.4.1, 2026-09-16.)
 - **Hidden things.** `concealed` on a thing placed in a room; the standard SEARCH in that room reveals it ("Hidden here, you discover: a data chip").
 - **Cutting.** `scenery, plural, cuttable with the cable snips` plus `on the player cutting`; the standard `cutting` action carries the tool check, the clause carries the story.
 - **Grammar patterns are literal words.** `fire thrusters` is a phrase; `fire the thrusters` declares a slot named `thrusters` (`analysis.slot-shadows-entity`). Never write `the` in a pattern unless you mean a slot.
 - **Turns are visible.** The alarm clock's `at turn 10` counts every command including LOOK and EXAMINE; the tests document has to spend exactly that many.
 
-## Things that compile but do nothing at 3.6.0
+## Things that compile but do nothing
+
+All three re-checked against engine 5.4.1 on 2026-09-16 (Chord 3.6.0).
 
 - Per-entity `phrase taking-fixed-in-place:` (and the other standard-message aliases) inside a `create` block passed the gates and never changed the output. Use `on the player taking` / `refuse desk-heavy` with your own phrase instead.
-- A free-text slot (`the code is a topic`, `the code takes the rest of the line`) parsed as an entity at runtime: `dial 739` answered "You can't see any such thing." Digits are not allowed in grammar patterns either. Guess the Verb dropped typed combinations and opens the safe from the known numbers.
+- A free-text slot (`the code is a topic`, `the code takes the rest of the line`) never reaches the action body. At engine 5.3.0 it was parsed as an entity (`dial 739` answered "You can't see any such thing."); at 5.4.1 both forms answer "You can't do that." whatever is typed. An entity slot (`poke the target`) runs its body normally, so it is these two slot types that fail, not slots. Digits are not allowed in grammar patterns either. Guess the Verb dropped typed combinations and opens the safe from the known numbers.
 - `extend action going` with `head the direction` treated the direction as an entity; leave movement synonyms to the standard `going`.
 
 ## `win` does not stop the clause
@@ -334,7 +337,7 @@ key everything off the state.
   move the wumpus to a random adjacent room when not the wumpus is shot
 ```
 
-(Hunt the Wumpus, 3.6.0, 2026-09-10)
+(Hunt the Wumpus, 3.6.0, 2026-09-10; still so at engine 5.4.1, 2026-09-16)
 
 ## Advancing a one-way state ladder, written backwards
 
@@ -375,7 +378,9 @@ here." (Hunt the Wumpus, 3.6.0, 2026-09-10)
 
 ## Asking about the room the player is standing in
 
-There is no `the player's location is …` condition, so "how does this room
+There is no working `the player's location is …` condition — the possessive
+parses, but a state on it is `analysis.unknown-value` (*"`strange` is not a state
+or a known trait"*, engine 5.4.1, 2026-09-16) — so "how does this room
 compare" looks like one line per room. It is not. A condition that mentions `it`
 is **open** — a predicate over entities — and `any <condition>` asks whether
 anything satisfies it. Put the player in the condition and `any` finds the one
@@ -403,22 +408,27 @@ form. Applying `any`/`no` to a *closed* condition (one that never says `it`) is
 Being placed somewhere is not entering it. A room whose state is stepped on the
 way in stays on its initial state while the player stands in it at turn one,
 which reads as a bug and gates nothing. Seed it in `before the game starts`
-alongside whatever else that room needs. (Hunt the Wumpus, 3.6.0, 2026-09-11)
+alongside whatever else that room needs. (Hunt the Wumpus, 3.6.0, 2026-09-11; still so at engine 5.4.1, 2026-09-16)
 
-## `move the player` is a silent no-op in a start block
+## `move the player` in a start block: gate-clean, and wrong
 
 ```chord
 before the game starts
   change the player to the hunter
-  move the player to the Shambles      ## gate-clean, and does nothing
+  move the player to the Shambles      ## gate-clean, and the story will not load
   move the hunter to the Shambles      ## works
 end before
 ```
 
-The first form passes every gate and leaves the character wherever `starts in`
-put them. If the same block is also placing hazards, they move and the player
-does not — which is how Hunt the Wumpus first started a playthrough already
-inside the slime pit. Name the character, not the role. (3.6.0, 2026-09-11)
+The first form passes every gate. What happens next depends on the engine. At
+5.3.0 it did nothing, leaving the character wherever `starts in` put them; the
+same block was placing hazards, so they moved and the player did not, which is
+how Hunt the Wumpus first started a playthrough already inside the slime pit. At
+5.4.1 the story refuses to load: `Error loading story: No player entity exists
+yet.` That settles why — `the player` is not bound until the start block has
+run, even after `change the player to`. Louder than before, and still not caught
+by the gates. Name the character, not the role. (Chord 3.6.0; engine 5.3.0 on
+2026-09-11, engine 5.4.1 on 2026-09-16)
 
 ## `phrase detail` is prose, not layout
 
@@ -426,6 +436,9 @@ A `detail` must carry a `while <condition>` (`analysis.detail-unconditional`:
 unconditional detail belongs in the description), it appends *inside* the
 description's paragraph, and it **silently drops `{br}`** — at the start of the
 text, in the middle, anywhere. So a detail can never be given a line of its own.
+It is the detail and not the client: at engine 5.4.1 an ordinary phrase broke its
+line on `{br}` in the same run, while the detail joined both halves with a space
+(2026-09-16).
 
 Anything the player needs to find at a glance — an exit list, a readout — wants
 a header daemon instead, whose output is its own block:
@@ -462,7 +475,8 @@ state. Useful the next time the language truly cannot say something:
   ships an ADR-174 vocabulary — `sharpee-font-mono`, `sharpee-code`,
   `sharpee-command`, plus colours, sizes, `center`, `indent`. The bracket spelling
   `[font-mono:…]` in phrase text does **not** reach it at 3.6.0; it renders
-  literally in the terminal and the browser both. A hatch can attach it
+  literally in the terminal and the browser both (still so at engine 5.4.1, with
+  no `sharpee-font-mono` span in the page, 2026-09-16). A hatch can attach it
   structurally, and that does produce a real span:
 
   ```ts
@@ -477,12 +491,11 @@ state. Useful the next time the language truly cannot say something:
   2026-09-10 and 2026-09-11 the engine stopped at `win` / `lose` / `kill the
   player` and *everything* after it — typed commands and the browser client's own
   File → Restart — threw `Engine is not running`, leaving the player with a raw
-  error on every keystroke and no way back but reloading. Fixed upstream: the
-  engine now answers with a message naming the meta commands that still work
-  (RESTART, RESTORE, QUIT, UNDO), and RESTART after an ending yields a genuinely
-  fresh game, random placement re-rolled. Verified 2026-09-12. If you meet the old
-  behaviour, the toolchain is behind.
-
+  error on every keystroke and no way back but reloading. Fixed upstream: RESTART
+  after an ending yields a genuinely fresh game, random placement re-rolled
+  (verified 2026-09-12). Other commands still get an error rather than prose,
+  though now one that names the way out — see Scoring and endings above. If you
+  meet `Engine is not running`, the toolchain is behind.
 
 - The direction set is closed: eight compass points plus up and down. But new direction *words* are easy: `extend action going` with bare-word patterns (`fore` / `means direction north`, `aft` / south, `port` / west, `starboard` / east, plus the `go fore` forms) compiled and played correctly in No Signal Home on 2026-09-08. Where there is no exit the engine still answers "You can't go that way."
 - No global action interceptor. A whole-room verb catcher exists only for death (`deadly:`); use an `on every turn while <condition>` daemon to nag instead of block.
@@ -500,6 +513,41 @@ The 3.0.0 draft of No Signal Home (now `no-signal-home-sharpee/legacy/story/`) f
 | `analysis.start-block-missing` | add `before the game starts` with `change the player to <character>` |
 
 Also since 3.0: `import "<file>"` is the single generalized import (`.chord` assumed, story-rooted paths); `import phrasebook` is gone.
+
+## Moving a game to a new engine release
+
+The language and the engine are versioned separately, and a clean compile says
+nothing about the engine. Chord stayed 3.6.0 while all 23 games here moved from
+engine 5.3.0 to 5.4.1 (2026-09-11 and 2026-09-12), and the engine API under every
+one of them changed.
+
+- **Re-derive `src/browser-entry.ts` on every bump.** It is story-owned source
+  that `sharpee init` scaffolds once, and nothing refreshes it. 5.4.0 renamed
+  `GameEngine.setStory` to `installStory`, stopped taking `player` in the
+  constructor (the template no longer creates a player entity at all), and
+  changed `story.config.author` to `authors`; 5.4.1 then removed `ENGINE_VERSION`
+  from the entry. After installing, diff the game's entry against
+  `node_modules/@sharpee/devkit/templates/browser/chord-browser-entry.ts.template`
+  and regenerate it from the template with the game's four values
+  (`{{STORY_TITLE}}`, `{{STORAGE_PREFIX}}`, `{{DEFAULT_THEME}}`, `{{THEMES_JSON}}`).
+  No game here customizes its entry, so this is mechanical; keep each file's line
+  endings. A project with no `src/browser-entry.ts` at all builds from the
+  current template.
+- **Neither the build nor the tests will notice a stale entry.** `sharpee build`
+  bundles it with esbuild and does not typecheck it, and `sharpee test` never
+  loads it. With `engine.setStory(story)` left in the entry at 5.4.1 — a method
+  the engine no longer has — the build printed `✅ Build complete!` and exited 0,
+  the tests passed, and the page threw `TypeError: a.setStory is not a function`
+  on load, showing its menus and no story. Open `dist/web/<id>/index.html` and
+  play a turn before trusting an upgrade. A live page holds a few hundred
+  characters of text; a dead one about fifty.
+- **Pin the whole `@sharpee/*` scope with an npm `overrides` block**, not only
+  the direct dependencies. With `^` ranges the transitive `@sharpee/*` packages
+  resolve forward on their own, which is how 5.3.1's broken publish reached games
+  whose direct pins were correct.
+
+(Re-checked 2026-09-16 against engine 5.4.1: a stale entry builds clean and passes
+its tests.)
 
 ## Multi-file stories
 
