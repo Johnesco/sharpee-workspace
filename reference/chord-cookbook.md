@@ -531,9 +531,27 @@ Chord's answer to Inform 7's `printing a parser error` activity. Engine 5.4.1, C
   `{verb:is item}` — both of which appear in the stdlib's own defaults — print **literally**,
   braces and all. Copy a default message as your starting point and you will ship
   `{capitalize the item} {verb:is item} fixed in place.` to the player. Rewrite around them.
+- **An override only fires for a thing already in scope, so half the tempting aliases are
+  dead.** Guess the Verb shipped sixteen and had to delete six after probing each one:
+  `examining-cant-see`, `examining-not-visible`, `examining-nothing-special`,
+  `searching-not-visible`, `taking-cannot-take` (an unknown or out-of-scope noun fails in
+  the parser, before any action runs) and `going-no-exit` (`going-no-exit-that-way` gets
+  there first). Probe every alias with a command that should trigger it — a dead override
+  compiles, reads as working, and never prints. The corollary is Inform 7's own finding:
+  for an unknown noun the only defense is the noun layer.
 - **A multi-variant override does not substitute at all.** With `, first-time` (or any
   strategy) and `or`-separated variants, *every* `{…}` printed literally, in both variants.
   One variant per override until this is fixed.
+
+## `discard` prints nothing (engine 5.4.1)
+
+`discard` is in the engine's dropping vocabulary (`@sharpee/lang-en-us/data/verbs.js:158`,
+alongside `drop`, `put down`, `throw away`) and produces **no output at all** — the item is
+dropped, silently. It stays silent whether or not the story declares `discard the item` on
+`extend action dropping`, so it is not a shadowing problem. `drop` and `throw away` are
+fine. Shadow it with a story action if you care about the workspace rule that silent
+output is a bug. Found by sweeping every grammar pattern through `sharpee play` and
+flagging empty responses, which is worth doing once per game.
 
 ## An action body carries requirements and mutations (Guess the Verb, 2026-09-17)
 
