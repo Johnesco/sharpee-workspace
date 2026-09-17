@@ -553,6 +553,26 @@ fine. Shadow it with a story action if you care about the workspace rule that si
 output is a bug. Found by sweeping every grammar pattern through `sharpee play` and
 flagging empty responses, which is worth doing once per game.
 
+## Sweeping the noun layer (Guess the Verb, 2026-09-17)
+
+Inform 7's findings call the noun layer the hidden killer, and it is the one layer that
+cannot be spot-checked: a missing alias is indistinguishable from a word the author never
+considered. Two sweeps, both cheap, both worth keeping as tests-document branches:
+
+- **Alias sweep.** Parse every `aka` out of the story, examine each one in the room where
+  its thing is in scope, and compare the response against that thing's *canonical* name.
+  Comparing to the canonical response — not merely checking for "can't see any such
+  thing" — is what catches a word that silently resolves to the *wrong* entity, which is
+  the disambiguation hazard. Guess the Verb: 267 aliases, all exact.
+- **Prose sweep.** Tokenise every room description and the descriptions of the things in
+  it, drop a stopword list, and examine what is left in that room. Expect a long tail of
+  verbs and adjectives; triage the residue by hand. Guess the Verb's first run flagged
+  131 words and 19 of them were real nouns, including `numbers` — the entire clue to the
+  safe combination, which until then answered "You can't see any such thing."
+
+Adding aliases can *create* ambiguity, so re-run the alias sweep afterwards and check for
+"Which do you mean" as well as for misses.
+
 ## An action body carries requirements and mutations (Guess the Verb, 2026-09-17)
 
 A `define action` body is not limited to `phrase <key>`. This whole block is gate-clean and
