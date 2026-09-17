@@ -499,6 +499,16 @@ Found translating Dungeo's opening; engine 5.4.1, Chord 3.6.0. Detail and the tr
 - **`room name:` is not in this engine** (`analysis.trait-not-declared`), so rooms need distinct names.
 - **Naming the playable character `you`** passes the gates and fails to load: `No player entity exists yet.`
 
+## Random exits, counting, and several blocks on one exit (Dungeon, phase 2, 2026-09-17)
+
+Engine 5.4.1, Chord 3.6.0; transcripts in `dungeo-sharpee/docs/translation-notes.md`.
+
+- **Moving the player from a room's `on the player going` clause does not stick.** The new room's description prints, then the move is rolled back and the player is where they started, with an engine warning about a missing `if.event.went`. Going moves the actor from the location it read at the start of the command.
+- **A room whose exits lead somewhere at random is a transit room.** Point every direction one-way at a transit room whose exits are the real destinations and whose `after the player entering` clause is `move <the character> to a random adjacent room`. A moved arrival prints the destination and fires its entering clauses, the draw is seeded, and a destination listed twice keeps double odds. The cost: the transit room's heading and description show on the way through, so make the description the line the player should read.
+- **Counting what the player carries works:** a story counter reset in a header daemon, then `each carried-item / raise baggage by 1 / end each` over `define condition carried-item: the adventurer holds it`. `holds` counts direct contents only, so a full sack counts once. Exits can then read it: `up is blocked while baggage > 2: too-much`.
+- **One direction can carry several blocked lines**; the first whose condition holds speaks. Order them from most specific to least.
+- **A `light-source` that is never switched** (a torch that is always lit) lights the room from a hand or the floor, but `is lit` reads false for it. Test where it is instead. Switching off another lamp while carrying it still prints "plunging the area into darkness", though the room stays lit.
+
 ## Known limits
 
 - **A finished story used to be unrecoverable; it is not any more.** Between
