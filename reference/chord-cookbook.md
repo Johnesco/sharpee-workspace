@@ -485,6 +485,20 @@ state. Useful the next time the language truly cannot say something:
 
 (3.6.0, 2026-09-11)
 
+## Combat, light, and containment (Dungeon, 2026-09-17)
+
+Found translating Dungeo's opening; engine 5.4.1, Chord 3.6.0. Detail and the transcripts behind each line are in `dungeo-sharpee/docs/translation-notes.md`.
+
+- **A combat kill is invisible to Chord, so watch what the body drops.** Chord cannot read a combatant's health (`analysis.unknown-counter`), and an `after the player attacking` clause on a combatant never fires: the extension owns that seam. Give the villain `drops-inventory true` and key everything on the dropped weapon: `north is blocked while the troll holds the bloody axe`, and a region daemon `on every turn while the troll is in the Troll Room and not the troll holds the bloody axe` that speaks and `remove`s the body. Blows draw on the seeded stream, so a pinned tests seed fixes the fight.
+- **`guard` is a bare adjective** (`a person, guard, combatant with …`); `a guard` is `analysis.unknown-kind-noun`. The player needs `combatant with health N` or villain blows do nothing. The extension's miss line is unconjugated for a villain ("swings … but miss!"); `override message attacking-combat-attack-missed` with `{You} {swing} at {the target} but {miss}!` fixes it.
+- **`is in` counts carried things.** `the bloody axe is in the Troll Room` is true while the troll in that room holds it. Use `holds` to tell the two apart.
+- **No statement can switch a light off.** `set` writes only fields of a story's own `define trait` data, never the engine's light source, and the light-source fuel model does not burn. A battery is a story counter burned by a header daemon; at zero, move a separate dead lamp into the holder's hands (or the lamp's location) and `remove` the lit one. Gate the daemon on a state the swap advances: a removed thing keeps its lit flag, and a daemon still firing on it throws `Cannot move to <thing>'s location — <thing> is offstage` every turn.
+- **Walking into the dark is allowed; there is no grue.** The engine only withholds the description. A grue is a header daemon over a story counter, with dark rooms listed in a region and light sources in a named condition.
+- **A room is a direct member of one region only** (`analysis.region-double-membership`); nest the smaller region inside the larger instead.
+- **A two-way exit line infers its reverse.** Classic maps are full of exits that do not mirror (north out, west back); write each on its own room with `, one-way`.
+- **`room name:` is not in this engine** (`analysis.trait-not-declared`), so rooms need distinct names.
+- **Naming the playable character `you`** passes the gates and fails to load: `No player entity exists yet.`
+
 ## Known limits
 
 - **A finished story used to be unrecoverable; it is not any more.** Between

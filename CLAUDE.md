@@ -14,6 +14,11 @@ This directory holds every Sharpee-engine interactive fiction project authored b
   record in this workspace of what Chord does and does not do. One thing to know before
   touching it: a `walkthrough.coverage.json` must never appear at its root, because a
   room-sweeping walkthrough cannot survive a cave where two rooms kill you.
+- `dungeo-sharpee/` — Dungeon, the 1981 mainframe Zork, being translated into Chord
+  from Dave Cornelson's TypeScript Dungeo (upstream `stories/dungeo`, vendored in its
+  `legacy/`). Phase 1 of 12 (surface, house, cellar, troll) shipped as a work in progress
+  2026-09-17; the plan is its `docs/translation-plan.md`. Not `dungeo`: `Johnesco/dungeo`
+  holds John's earlier TypeScript build and must not be pushed to.
 - `sample-sharpee/` — Chord twin of the Inform 7 "Sample" in `C:/code/text-games/i7/sample/`, translated 2026-09-08 for engine comparison.
 - `sharpee-sound-test/` — TypeScript audio diagnostic pinned to 0.9.111, frozen, not a git repo. The build script's legacy mode re-lays its `browser/` output at the root if it is ever shipped.
 - `website/` — dead. It mirrored the fork's Astro site and the fork is gone. Delete when convenient.
