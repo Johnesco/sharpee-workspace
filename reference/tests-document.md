@@ -82,9 +82,32 @@ Verified against Sharpee 5.3.0 / Chord 3.6.0 on 2026-09-07, and again against Sh
   assertions — which is why the trivially true capture trick above is for
   drafting only. Give the turn after anything that might end the story a
   `contains` check.
+- **A branch does not inherit an ending.** A branch forks from a copy of the
+  game at its card, and the copy does not carry the engine's ended phase. A
+  branch hung on the card that wins or kills starts in a game that is still
+  playing: its first `look` just describes the room. To test what happens after
+  an ending, the ending has to happen inside the branch (found 2026-09-17).
 
 (Found 2026-09-10 while writing `wumpus-sharpee.tests.json`; re-checked against
 Sharpee 5.4.1 on 2026-09-16.)
+
+## The ending-and-restart branch
+
+Every game here with an ending carries one branch proving that a finished story
+can be restarted: the thing a stale engine breaks for every player who reaches an
+ending, and which no other card checks. Because a branch does not inherit an
+ending, it hangs on the main line's **second-to-last** card and replays the
+ending move itself:
+
+1. the ending command, with the same assertions as the main line's ending card;
+2. `look` — `contains: ["The game has ended"]`;
+3. `restart` — `contains: ["The story restarts."]`;
+4. `look` — `contains` the opening room, and `notContains: ["The game has ended"]`.
+   Where the start is random (wumpus), assert something every room prints instead.
+
+The runner reports the ended `look` with no turn number and the fresh game's
+`look` as turn 1. The branch is not on the main line, so `walkthrough.txt` does
+not change. Games without an ending (the family zoo steps) carry none.
 
 ## Writing one by hand
 

@@ -30,8 +30,17 @@ What it protects, and why:
             and ignores dist/ and node_modules/. A game still on the 0.9.x
             browser/ layout is a WARN until build.py re-lays it. A folder that
             already has play.html at the root and nothing to compile from is
-            `static` — a frozen published artifact, like the familyzoo-vNN
-            tutorial steps, where the built output *is* the repo.
+            `static` — a frozen published artifact, where the built output *is*
+            the repo.
+  entry     a Chord game's src/browser-entry.ts is the installed devkit
+            template with the game's own four values filled in. The entry
+            is story-owned source that no upgrade refreshes, and neither the
+            build nor `sharpee test` loads it: at engine 5.4.0 every game
+            here built clean and passed its tests with a page that loaded
+            blank. The template is read from the game's node_modules, so
+            this WARNs until npm install has run. An entry customised on
+            purpose carries `custom-entry:` in a comment and is a WARN, to
+            be re-checked by hand after every engine bump.
   github    the sdlc-baseline issue and PR templates are vendored, the one
             category consumption.md says must be copied.
 """
@@ -52,6 +61,16 @@ DEAD_PATHS = ("C:/code/fork/sharpee", "C:\\code\\fork\\sharpee", "oldzoo/")
 REQUIRED_CONF = ("engine", "title", "author", "description", "tags")
 GITHUB_FILES = (".github/ISSUE_TEMPLATE/bug.yml", ".github/ISSUE_TEMPLATE/feature.yml",
                 ".github/PULL_REQUEST_TEMPLATE.md")
+ENTRY = Path("src") / "browser-entry.ts"
+ENTRY_TEMPLATE = Path("node_modules/@sharpee/devkit/templates/browser/chord-browser-entry.ts.template")
+CUSTOM_ENTRY = "custom-entry:"
+# Each placeholder in the devkit template, and where the game's own entry keeps its value.
+ENTRY_VALUES = {
+    "{{STORY_TITLE}}": (r"\* Browser entry point for (.+?) \u2014 a Chord", 0),
+    "{{STORAGE_PREFIX}}": (r"const THEME_STORAGE_KEY = '(.+?)-theme';", 0),
+    "{{DEFAULT_THEME}}": (r"defaultTheme: '(.+?)'", 0),
+    "{{THEMES_JSON}}": (r"themes: (\[.*?\n      \]),\n", re.S),
+}
 
 
 def read_conf(path: Path) -> dict:
@@ -252,6 +271,41 @@ def check_layout(game: Path, r: Report, mode: str) -> None:
         r.warn(".gitignore missing (node_modules/ and dist/ would be committed)")
 
 
+def check_entry(game: Path, r: Report) -> None:
+    entry = game / ENTRY
+    if not entry.exists():
+        r.ok("no src/browser-entry.ts: the build uses the installed devkit template")
+        return
+    template = game / ENTRY_TEMPLATE
+    if not template.exists():
+        r.warn("src/browser-entry.ts not checked: @sharpee/devkit is not installed (npm install)")
+        return
+    text = entry.read_text(encoding="utf-8", errors="replace").replace("\r\n", "\n")
+    rendered = template.read_text(encoding="utf-8", errors="replace").replace("\r\n", "\n")
+    custom = CUSTOM_ENTRY in text
+    for placeholder, (pattern, flags) in ENTRY_VALUES.items():
+        m = re.search(pattern, text, flags)
+        if not m:
+            msg = f"src/browser-entry.ts has no value for {placeholder}, so it cannot be compared to the devkit template"
+            (r.warn if custom else r.fail)(msg)
+            return
+        rendered = rendered.replace(placeholder, m.group(1))
+    unknown = sorted(set(re.findall(r"\{\{[A-Z_]+\}\}", rendered)))
+    if unknown:
+        r.warn("the devkit template has placeholders this check does not know: " + ", ".join(unknown)
+               + " (teach ENTRY_VALUES in tools/check_games.py)")
+        return
+    if text == rendered:
+        r.ok("src/browser-entry.ts matches the installed devkit template")
+    elif custom:
+        r.warn("src/browser-entry.ts is marked custom-entry: and differs from the devkit template; "
+               "re-check it by hand after every engine bump")
+    else:
+        r.fail("src/browser-entry.ts differs from the installed devkit template, so the page can load blank "
+               "while the build and sharpee test both pass; regenerate it from the template "
+               "(reference/chord-cookbook.md, \"Moving a game to a new engine release\")")
+
+
 def check_github(game: Path, r: Report) -> None:
     missing = [f for f in GITHUB_FILES if not (game / f).exists()]
     if missing:
@@ -267,6 +321,8 @@ def check_game(game: Path) -> Report:
     check_conf(game, r)
     mode = check_source(game, r)
     check_layout(game, r, mode)
+    if mode == "chord":
+        check_entry(game, r)
     check_github(game, r)
     r.mode = mode  # type: ignore[attr-defined]
     return r

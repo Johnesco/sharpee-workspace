@@ -36,7 +36,7 @@ The old `oldzoo/` tutorial project is gone; its archive is `C:/code/familyzoo-fi
 ```bash
 python tools/new_game.py <id> --title "Title" --description "One sentence."   # scaffold a Chord game with docs
 python tools/new_game.py --adopt <game>                                      # write missing docs into an existing game
-python tools/check_games.py [<game>] [-v]                                    # the docs-and-layout gate, every game
+python tools/check_games.py [<game>] [-v]                                    # docs, layout and browser-entry gate; build.py does not run it, so run it before shipping
 python tools/build.py <game> [--force] [--no-test] [--skip-install]          # gates, build, tests, hub folder
 python C:/code/ifhub/tools/ship.py <game> --local                             # register on disk, preview
 python C:/code/ifhub/tools/ship.py <game>                                     # publish + list on the live hub
@@ -72,7 +72,7 @@ Known gap: the hub's Pages workflow copies only `web lib assets audio sfx src` p
 
 Two test worlds, by project type:
 
-**Chord projects** — `sharpee test` replays **`<id>.tests.json`** beside the story (ADR-307). It is the source of truth: a tree of cards (`opening`, `boot`, `turn`) with `contains`, `notContains`, `exact`, `states`, `events`, and `channels` assertions, and `branches` on any card for alternate lines. `.transcript` files are refused by name. On Windows the document is written by hand (Chord Writer records it on macOS). `hello-chord/hello-chord.tests.json` is the worked example: the main line through the win plus one branch of wrong-order refusals. Useful `states` forms: `player.inventory contains brass key`, `player.location = Bell Loft`, `the red rope is pulled`.
+**Chord projects** — `sharpee test` replays **`<id>.tests.json`** beside the story (ADR-307). It is the source of truth: a tree of cards (`opening`, `boot`, `turn`) with `contains`, `notContains`, `exact`, `states`, `events`, and `channels` assertions, and `branches` on any card for alternate lines. `.transcript` files are refused by name. On Windows the document is written by hand (Chord Writer records it on macOS). `hello-chord/hello-chord.tests.json` is the worked example: the main line through the win, one branch of wrong-order refusals, and the ending-and-restart branch every game with an ending carries (`reference/tests-document.md`). Useful `states` forms: `player.inventory contains brass key`, `player.location = Bell Loft`, `the red rope is pulled`.
 
 Iterate with `npx sharpee compose --check <id>.story` (line-anchored diagnostics, nothing written) and `printf 'north\nlook\n' | npx sharpee play` (a quick transcript without recording).
 

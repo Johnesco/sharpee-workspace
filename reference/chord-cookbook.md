@@ -540,7 +540,12 @@ one of them changed.
   the tests passed, and the page threw `TypeError: a.setStory is not a function`
   on load, showing its menus and no story. Open `dist/web/<id>/index.html` and
   play a turn before trusting an upgrade. A live page holds a few hundred
-  characters of text; a dead one about fifty.
+  characters of text; a dead one about fifty. `python tools/check_games.py` now
+  catches this without a browser: it compares every entry with the installed
+  devkit template and fails the game when they differ.
+- **Every game with an ending tests that it can be restarted**, in a branch of its
+  tests document (`tests-document.md`, "The ending-and-restart branch"), so
+  `build.py` stops a release that strands a player after the ending.
 - **Pin the whole `@sharpee/*` scope with an npm `overrides` block**, not only
   the direct dependencies. With `^` ranges the transitive `@sharpee/*` packages
   resolve forward on their own, which is how 5.3.1's broken publish reached games
