@@ -600,6 +600,17 @@ Note the scope trap on hint actions: a slot only matches something **in scope**,
 porch) — it falls through to the parser instead. Name the real destinations as literal
 patterns and keep the slot form as a fallback.
 
+## Visual effects from the story (Fever Dream, 2026-09-21)
+
+Engine 5.4.1, Chord 3.6.0. The design is `fever-dream-sharpee/docs/adr/0001-mood-overlay-story-signals-page-renders.md`.
+
+- **The story can signal the page without a hatch.** `transition <kind>` and `emit media-transition with kind "<k>" and durationMs <n> when client has transitions` both compile. The standard `transition` channel carries `{kind, durationMs}`, and the browser adds the class `transition-<kind>` to `.sharpee-window` for `durationMs` (default 250), then removes it. Removing the class stops a CSS animation, so anything longer than a blink needs the `emit` form. Payload keys are taken literally: `duration ms` stays two words, so write `durationMs`.
+- **The tests document can see it.** `"channels": [{ "id": "transition.kind", "is": "glass" }]` passes, and the harness has the `transitions` capability, so a gated `emit` fires there. `is` takes a string only: a numeric field like `durationMs` cannot be asserted.
+- **Page JavaScript has one home, and it costs a gate warning.** Devkit bundles only `src/browser-entry.ts` and copies only the author CSS and `assets/`, while `build.py --force` rewrites `play.html`. An entry that imports page code must carry `custom-entry:`, and `check_games.py` WARNs on it. Regenerate it by hand after every engine bump.
+- **Mood colours belong on the `--theme-*` tokens.** Scope them to `html[data-theme="<default>"][data-…]` so a theme the player picks wins, and the hub's `!important` override wins over both. Register the colour tokens with `@property` to fade them (every built-in theme uses plain hex values for them; `--theme-desktop-bg` is a `var()`, so leave it out).
+- **Scenery is never listed**, so a thing the player must find needs a `phrase detail while …` line on its room. The Fever Dream translation dropped one of those, and the glass case the key hangs in went invisible (its #3).
+- **Verifying effects in the desktop preview:** a hidden pane runs no animation frames, so a CSS transition sits at time 0 and a computed colour reads as the old value. Read values with `transition: none` injected, and check `animationName` rather than watching for motion. `127.0.0.1` and `localhost` keep separate browser storage, so a test run on one leaves the user's save on the other untouched.
+
 ## Known limits
 
 - **A finished story used to be unrecoverable; it is not any more.** Between
