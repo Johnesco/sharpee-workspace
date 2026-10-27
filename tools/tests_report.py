@@ -44,6 +44,8 @@ import json
 from collections import defaultdict, deque
 from pathlib import Path
 
+import testdoc
+
 
 # ---------------------------------------------------------------------------
 # stream and document
@@ -653,14 +655,14 @@ if (window.ThemeListener) ThemeListener.init({
 def main() -> None:
     ap = argparse.ArgumentParser(description="Render a sharpee test --json stream into tests.html.")
     ap.add_argument("stream", help="NDJSON from sharpee test --json --capture-output --capture-world")
-    ap.add_argument("doc", nargs="?", help="the <id>.tests.json the stream ran (optional)")
+    ap.add_argument("doc", nargs="?", help="the <id>.tests.json or <id>.tests/ the stream ran (optional)")
     ap.add_argument("-o", "--out", default="tests.html")
     ap.add_argument("--title", default=None)
     ap.add_argument("--version", default="Sharpee")
     ap.add_argument("--exit-code", type=int, default=0)
     args = ap.parse_args()
     records = parse_ndjson(Path(args.stream).read_text(encoding="utf-8"))
-    doc = json.loads(Path(args.doc).read_text(encoding="utf-8")) if args.doc else {}
+    doc = testdoc.load_tests(Path(args.doc)) if args.doc else {}
     title = args.title or (doc.get("story") if doc else Path(args.stream).stem)
     page, stats = render(records, doc, title=title, version=args.version,
                          doc_name=Path(args.doc).name if args.doc else "", exit_code=args.exit_code)

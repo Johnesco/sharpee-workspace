@@ -24,7 +24,7 @@ What it protects, and why:
             game marked hub = yes has a play.html at the root. Registering the
             workspace root once nearly listed three games with broken links.
   source    a Chord game has an ifid in the header and its config.json, and a
-            <id>.tests.json that parses and names the same story id. A
+            <id>.tests.json (engine <= 5.4) or <id>.tests/ (5.5, segmented) that parses and names the same story id. A
             TypeScript game has src/index.ts.
   layout    a built game has theme-listener.js and game.js beside play.html,
             and ignores dist/ and node_modules/. A game still on the 0.9.x
@@ -49,6 +49,9 @@ import json
 import re
 import sys
 from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+import testdoc  # noqa: E402  (tools/testdoc.py reads either tests-document form)
 
 if sys.stdout.encoding and sys.stdout.encoding.lower() != "utf-8":
     sys.stdout.reconfigure(encoding="utf-8", errors="replace")
@@ -196,16 +199,17 @@ def check_source(game: Path, r: Report) -> str:
                 r.fail(f"{cfg.name} is not valid JSON")
         else:
             r.warn(f"{sid}.config.json missing (sharpee init writes it)")
-        tests = game / f"{sid}.tests.json"
-        if not tests.exists():
-            r.fail(f"{tests.name} missing: a Chord game needs its tests document (reference/tests-document.md)")
+        tests = testdoc.tests_path(game, sid)
+        if tests is None:
+            r.fail(f"{sid}.tests.json or {sid}.tests/ missing: a Chord game needs its tests document (reference/tests-document.md)")
         else:
             try:
-                doc = json.loads(tests.read_text(encoding="utf-8"))
+                doc = testdoc.load_tests(tests)
                 cards = doc.get("cards") or []
                 problems = []
-                if doc.get("version") != 1:
-                    problems.append("version must be 1")
+                want = 3 if tests.is_dir() else 1
+                if doc.get("version") != want:
+                    problems.append(f"version must be {want}")
                 if doc.get("story") != sid:
                     problems.append(f"story must be `{sid}`")
                 if not cards:
@@ -219,8 +223,8 @@ def check_source(game: Path, r: Report) -> str:
                     r.ok(f"{tests.name}: {len(cards)} cards, {turns} turns on the main line")
                     if turns == 0:
                         r.warn(f"{tests.name} has no turn cards yet; only the opening and boot are checked")
-            except json.JSONDecodeError as e:
-                r.fail(f"{tests.name} is not valid JSON: {e}")
+            except (json.JSONDecodeError, KeyError, ValueError, OSError) as e:
+                r.fail(f"{tests.name} is not readable: {e}")
         pkg = game / "package.json"
         if pkg.exists():
             data = json.loads(pkg.read_text(encoding="utf-8", errors="replace") or "{}")

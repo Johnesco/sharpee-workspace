@@ -44,6 +44,7 @@ import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
+import testdoc  # noqa: E402  (tools/testdoc.py reads either tests-document form)
 import tests_report  # noqa: E402  (tools/tests_report.py renders tests.html)
 
 if sys.stdout.encoding and sys.stdout.encoding.lower() != "utf-8":
@@ -364,16 +365,16 @@ def main() -> None:
     if not (build_dir / "index.html").exists():
         fail(f"expected {build_dir}/index.html after the build")
 
-    tests_doc = game_dir / f"{sid}.tests.json"
+    tests_doc = testdoc.tests_path(game_dir, sid)
     test_failed = False
     if args.no_test:
         step("tests skipped (--no-test)")
-    elif not tests_doc.exists():
+    elif tests_doc is None:
         step("tests")
-        print(f"  no {tests_doc.name}; no tests.html or walkthrough files written")
+        print(f"  no {sid}.tests.json or {sid}.tests/; no tests.html or walkthrough files written")
     else:
         step(f"sharpee test ({tests_doc.name})")
-        doc = json.loads(tests_doc.read_text(encoding="utf-8"))
+        doc = testdoc.load_tests(tests_doc)
         res = run(["npx", "sharpee", "test", "--json", "--capture-output", "--capture-world"],
                   game_dir, capture=True)
         records = parse_ndjson(res.stdout or "")
