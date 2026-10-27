@@ -611,6 +611,23 @@ Engine 5.4.1, Chord 3.6.0. The design is `fever-dream-sharpee/docs/adr/0001-mood
 - **Scenery is never listed**, so a thing the player must find needs a `phrase detail while …` line on its room. The Fever Dream translation dropped one of those, and the glass case the key hangs in went invisible (its #3).
 - **Verifying effects in the desktop preview:** a hidden pane runs no animation frames, so a CSS transition sits at time 0 and a computed colour reads as the old value. Read values with `transition: none` injected, and check `animationName` rather than watching for motion. `127.0.0.1` and `localhost` keep separate browser storage, so a test run on one leaves the user's save on the other untouched.
 
+## Chord 3.6 to 4.0 (Dungeon, engine 5.5.0, 2026-10-27)
+
+Verified by upgrading `dungeo-sharpee`; every other game here is still on 3.6.0 and this section does not apply to them yet. Each break has a diagnostic that names the fix, and a script does the bulk of it.
+
+- **The kind leads every block.** A bare scenery thing, treasure or key starts `a thing`; `a container` / `a supporter` moves to the front instead of following `scenery`. Diagnostics: `analysis.missing-kind-noun`, `analysis.kind-not-first`. The inline form `create the Potting Shed, a room` is also legal.
+- **`with max items N` / `with max weight N` / `with capacity N` become `holds N`**, a line of its own on a container or supporter (`parse.removed-capacity-setting`).
+- **Regions are declared from the rooms.** A room carries `in the <region>`; `containing` is gone (`parse.removed-containing`); regions do not nest and a room is in one region only; a region with no rooms is `analysis.region-memberless`. A region that existed only to host a daemon can usually fold into the room.
+- **Hatches (`define text|action|chain ... from`) no longer exist.** A story is pure IR.
+- **`use state-machines` is an error**; `define machine` is core.
+- **The tests document is a directory**, `<id>.tests/` (ADR-355): `manifest.json` (`version` 3, `story`, `seed`) and one `<segment id>.json` per run of cards between fork points, each naming its `parent` and fork `ordinal` (0 is the line's continuation, 1..n its branches); every card has an 8-character `id`. `sharpee test` refuses a tree that is not byte-for-byte canonical, so never hand-edit it: convert and edit through `@sharpee/branch-tester`'s `tree-document.js` (`ensureSegmentIds`, `segmentTree`, `assembleTree`, `checkCanonicalTree`), reading `node_modules` by absolute path. Add `<id>.tests/*.json text eol=lf` to `.gitattributes` or a Windows checkout turns the tree CRLF and the gate fails. The workspace's `tools/testdoc.py` reads both forms, and `check_games.py`, `build.py` and `tests_report.py` use it.
+- **A command sent to a finished game is a test error now**, not recorded output (the 3.6-era `The game has ended` probe card is a failing card). Keep the fatal command and the `restart` card.
+- **Seeded draws shift between releases**: a card that depends on a random outcome (a grue, a fight) can move a turn at the same seed. Re-capture it.
+- **The derived rule tests** (ADR-356) run beside the authored tree, and a daemon whose guard the arranger cannot satisfy fails them. `is lit` cannot be arranged for a switched lamp; gate on `is on`.
+- **Re-derive `src/browser-entry.ts`** as always (`tools/check_games.py` catches a stale one).
+- **What closed:** a vehicle kind (the bucket example in the guide is a two-stop line whose `position` reads whether it holds the water), `light-source ... starts unlit` with PUT OUT, `powered by <thing>` (remove the battery and the room goes dark by itself, the switch stays on), `settable` dials with word-named states, `attached to` / `detachable`, `breakable` / `fragile` / `flammable`, `night-vision`, backdrops, hidden exits (`north to X while <condition>`), `rooms Maze 1 to 12`.
+- **What did not** (spiked at 5.5.0): `after the player attacking` on a combatant never fires and health is unreadable; `move ... to a random adjacent room` out of a going clause still prints the new room and then moves from there; no revival policy, no negative scores; no free text reaching an action.
+
 ## Known limits
 
 - **A finished story used to be unrecoverable; it is not any more.** Between

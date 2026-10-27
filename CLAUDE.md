@@ -16,8 +16,9 @@ This directory holds every Sharpee-engine interactive fiction project authored b
   room-sweeping walkthrough cannot survive a cave where two rooms kill you.
 - `dungeo-sharpee/` — Dungeon, the 1981 mainframe Zork, being translated into Chord
   from Dave Cornelson's TypeScript Dungeo (upstream `stories/dungeo`, vendored in its
-  `legacy/`). Phase 1 of 12 (surface, house, cellar, troll) shipped as a work in progress
-  2026-09-17; the plan is its `docs/translation-plan.md`. Not `dungeo`: `Johnesco/dungeo`
+  `legacy/`). Phases 1-2 of 12 shipped as a work in progress 2026-09-17; the plan is its
+  `docs/translation-plan.md`. Upgraded to Sharpee 5.5.0 / Chord 4.0.0 on 2026-10-27 (branch
+  `chord-4-upgrade`, verified and built, not yet shipped); modelling the MDL from phase 3. Not `dungeo`: `Johnesco/dungeo`
   holds John's earlier TypeScript build and must not be pushed to.
 - `sample-sharpee/` — Chord twin of the Inform 7 "Sample" in `C:/code/text-games/i7/sample/`, translated 2026-09-08 for engine comparison.
 - `sharpee-sound-test/` — TypeScript audio diagnostic pinned to 0.9.111, frozen, not a git repo. The build script's legacy mode re-lays its `browser/` output at the root if it is ever shipped.
@@ -27,9 +28,9 @@ The old `oldzoo/` tutorial project is gone; its archive is `C:/code/familyzoo-fi
 
 ---
 
-## Toolchain (verified 2026-09-16)
+## Toolchain (verified 2026-10-27)
 
-- Engine: `@sharpee/*` **5.4.1** on npm. Language: **Chord 3.6.0**. The two are versioned separately; what an engine bump touches in a game is in `reference/chord-cookbook.md` ("Moving a game to a new engine release"). `@sharpee/devkit` owns the `sharpee` command: `init`, `build`, `publish`, `compose --check`, `test`, `play`, `introspect`, `ifid`.
+- Engine: `@sharpee/*` **5.5.0** on npm (2026-10-27), language **Chord 4.0.0**, a major: every `create` block names its kind first, hatches are gone, regions list rooms from the rooms' side, the tests document is a directory (`reference/chord-cookbook.md`, "Chord 3.6 to 4.0"). **Only `dungeo-sharpee` is on it.** Every other game stays pinned to **5.4.1 / Chord 3.6.0** until it is upgraded, one at a time. Language 3.6.0 notes below are for those games. The two are versioned separately; what an engine bump touches in a game is in `reference/chord-cookbook.md` ("Moving a game to a new engine release"). `@sharpee/devkit` owns the `sharpee` command: `init`, `build`, `publish`, `compose --check`, `test`, `play`, `introspect`, `ifid`.
 - Install once for scaffolding: `npm install -g @sharpee/devkit`. Every scaffolded game pins its own devkit and engine; inside a game folder `npx sharpee` uses the pinned copy.
 - `sharpee init <name> -y` scaffolds a Chord project (`<id>.story`, `<id>.config.json` with the IFID, `package.json`, `src/browser-entry.ts`, `browser/<id>.css`, `assets/`, `feelies/`). `--ts` scaffolds TypeScript.
 - Docs: the Chord guide and grammar reference at https://sharpee.net/chord/ are the source of truth. The upstream repo (https://github.com/ChicagoDave/sharpee) keeps the ADRs (214–331 cover Chord) and `packages/chord/chord.ebnf`. The old read-only clone at `C:/code/fork/sharpee` **no longer exists**; nothing here should depend on it.
