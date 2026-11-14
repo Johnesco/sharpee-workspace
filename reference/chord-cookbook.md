@@ -696,6 +696,11 @@ one of them changed.
   the direct dependencies. With `^` ranges the transitive `@sharpee/*` packages
   resolve forward on their own, which is how 5.3.1's broken publish reached games
   whose direct pins were correct.
+- **Run `npm install` yourself after changing the pins.** `build.py` installs only
+  when `node_modules/` is missing, so a game that already has one builds, tests
+  and passes on the old engine with the new pins in `package.json`. Confirm with
+  `npx sharpee --version` (or the Chord version `compose --check` prints) before
+  trusting a result. Found 2026-11-14 moving Family Zoo's sixteen steps to 5.6.1.
 
 (Re-checked 2026-09-16 against engine 5.4.1: a stale entry builds clean and passes
 its tests.)
