@@ -613,7 +613,7 @@ Engine 5.4.1, Chord 3.6.0. The design is `fever-dream-sharpee/docs/adr/0001-mood
 
 ## Chord 3.6 to 4.0 (Dungeon, engine 5.5.0, 2026-10-27)
 
-Verified by upgrading `dungeo-sharpee`; every other game here is still on 3.6.0 and this section does not apply to them yet. Each break has a diagnostic that names the fix, and a script does the bulk of it.
+Verified by upgrading `dungeo-sharpee`; the other games followed on 2026-11-18 (next section). Each break has a diagnostic that names the fix, and a script does the bulk of it.
 
 - **The kind leads every block.** A bare scenery thing, treasure or key starts `a thing`; `a container` / `a supporter` moves to the front instead of following `scenery`. Diagnostics: `analysis.missing-kind-noun`, `analysis.kind-not-first`. The inline form `create the Potting Shed, a room` is also legal.
 - **`with max items N` / `with max weight N` / `with capacity N` become `holds N`**, a line of its own on a container or supporter (`parse.removed-capacity-setting`).
@@ -630,6 +630,21 @@ Verified by upgrading `dungeo-sharpee`; every other game here is still on 3.6.0 
 - **In a git worktree,** run `npm ci` in the worktree and pass the worktree *path* to `check_games.py` and `build.py`. They read `node_modules` relative to the game, and a bare game name resolves to the main checkout.
 - **What closed:** a vehicle kind (the bucket example in the guide is a two-stop line whose `position` reads whether it holds the water), `light-source ... starts unlit` with PUT OUT, `powered by <thing>` (remove the battery and the room goes dark by itself, the switch stays on), `settable` dials with word-named states, `attached to` / `detachable`, `breakable` / `fragile` / `flammable`, `night-vision`, backdrops, hidden exits (`north to X while <condition>`), `rooms Maze 1 to 12`.
 - **What did not** (spiked at 5.5.0): `after the player attacking` on a combatant never fires and health is unreadable; `move ... to a random adjacent room` out of a going clause still prints the new room and then moves from there; no revival policy, no negative scores; no free text reaching an action.
+
+## Moving the last 3.6 games to Chord 4.0.3 (engine 5.6.3, 2026-11-18)
+
+Hello Chord, Sample, Fever Dream and Guess the Verb went from 5.4.1 / Chord 3.6.0 to 5.6.3, and No Signal Home and Wumpus were bumped. What the section above does not say:
+
+- **`remove from action <name>` takes the standard action's name as the diagnostic prints it** (`switching_on`, `looking_under`), and each line under it must be a whole standard rule. A rule with an alternation is written `talk to or with the target`; `|` is a parse error, and `talk to the target` alone is `analysis.unmatched-removal-pattern`, whose message lists the action's rules. Releasing `talk to|with` also releases TALK WITH, so give the story action the same `to or with` line or that wording falls to nobody.
+- **Releasing the words keeps the old behaviour.** Before 5.6.1 a story action that repeated standard grammar silently won, so `remove from action` above the story action changes nothing in play. It is the fix for a game being moved, not redesigned.
+- **`breaking` and `breakable` are platform words.** A story trait named `breakable` is `analysis.trait-name-taken`, and `on the player breaking` is `analysis.breaking-after-only`. Fever Dream's verb became `smashing` on a `smashable` trait.
+- **`play sound` takes no `when client has sound`** (`analysis.play-sound-client-has`); `play ambient` and `stop ambient` still do.
+- **`play sound` from a thing that has left the world fails the turn** with "One of the story's rules failed here: Expected an entity". A fully eaten thing leaves the world (since 5.6.0), so a sound in its `after the player eating` clause breaks, and moving it to `on the player eating` does not help. Fever Dream plays it from the header: `on every turn while clarity, once`. A sequence with `0 turns later` compiles and did not play it on that turn.
+- **The story header takes no `##` comment** (`parse.header-field`), and a comment elsewhere needs a blank line on both sides (`lex.comment-blank-lines`).
+- **A card with `ending` must be the last card on its line.** `sharpee test` counts an ending as reached only on a card that carries `"ending": "<id>"`, and reports any card after it as never run. The restart branch therefore leaves `ending` off its fatal card and goes on to `restart`.
+- **An `events` assertion catches what the output cannot**: `"events": ["sound.emitted"]` proves a cue fired on that turn.
+- **Two engine changes showed up in Guess the Verb's 802 cards.** TURN on a thing that cannot turn now gives the story's `override message turning-cant-turn-that` where the engine used to say "You turn the brass doorbell." And a direction phrase such as `climb staircase / means direction up` now also matches CLIMB THE STAIRCASE.
+- **A custom `src/browser-entry.ts`** (Fever Dream's mood hook) is re-derived by rendering the template with the game's four values and putting the custom lines back. The 5.4.1 entry imported `./hatch-modules.js`, which no longer exists in the template.
 
 ## Known limits
 
