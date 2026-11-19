@@ -40,6 +40,7 @@ Verified against Sharpee 5.3.0 / Chord 3.6.0 on 2026-09-07, and again against Sh
 
 - `version` is 1; the reader refuses newer. `story` must equal the story id. `seed` pins the random service so every run is the same.
 - Cards are `opening` (no command; checks the channels the client shows before play), `boot` (the first look), and `turn` (a command). The opening comes first.
+- **Sharpee 5.7.0 (Chord 4.1.0) removed `boot`** (upstream ADR-404). The opening is a routine outside the turn count, and the single `opening` card holds everything it printed, the first look included; a tree with a `boot` card is refused. To move a tree, fold the boot card's assertions into the opening card and delete it, through `@sharpee/branch-tester` (`assembleTree` refuses the old tree, so fold the segment JSON first, then `assembleTree` + `segmentTree` to write it canonically). The first typed command is turn 1, so `at turn N` and counted clauses fire one command later than on 5.6.x. The example above is the pre-5.7.0 shape.
 - `branches` live on the card branched from: `{ "branch": <stable id>, "cards": [...] }`, recursively. The runner replays the parent line once and then each branch from that point. The main line continues with the parent's remaining cards.
 - Sibling order is array order. Labels are derived, not stored: the main line is `opening-<first room>`, a branch is `<room> · <command>`.
 
@@ -134,7 +135,7 @@ Keep the main line playable start to finish: `walkthrough.txt` on the hub is exa
                      {"description":"state player.inventory contains brass key","passed":true}]}
 ```
 
-`input` is `(opening)` for the opening card and `look` for the boot card. `file` is the derived line label, and the first `transcript-start` is the main line.
+`input` is `(opening)` for the opening card and `look` for the boot card (before 5.7.0). On 5.7.0 the opening record's `actualOutput` runs banner, channel values and the first look together, and its `turn` is null. `file` is the derived line label, and the first `transcript-start` is the main line.
 
 ## What tests.html shows
 

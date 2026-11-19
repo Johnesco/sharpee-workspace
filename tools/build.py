@@ -216,9 +216,17 @@ def write_walkthrough(game_dir: Path, doc: dict, records: list[dict]) -> None:
         text = (r.get("actualOutput") or "").rstrip()
         cmd = r.get("input", "")
         if cmd == "(opening)":
+            # Sharpee 5.7.0+ (ADR-404): the opening card carries the first look.
+            # The test stream flattens the banner and the channel values ahead of
+            # it, so keep the text from the first room's name on. Before 5.7.0 the
+            # opening printed no room, and the boot look below supplies it.
+            room = ((r.get("world") or {}).get("location") or {}).get("name")
+            lines = text.splitlines()
+            if room and room in lines:
+                out.append("\n".join(lines[lines.index(room):]))
             continue
-        if r.get("turn") == 1 and cmd == "look":
-            out.append(text)          # the boot look: the story's opening, no prompt
+        if r.get("turn") == 1 and cmd == "look" and not out:
+            out.append(text)          # the boot look (before 5.7.0): the story's opening, no prompt
         else:
             out.append(f"> {cmd}\n{text}")
     (game_dir / "walkthrough_output.txt").write_text("\n\n".join(out) + "\n", encoding="utf-8")
