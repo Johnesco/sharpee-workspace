@@ -220,10 +220,16 @@ def write_walkthrough(game_dir: Path, doc: dict, records: list[dict]) -> None:
             # The test stream flattens the banner and the channel values ahead of
             # it, so keep the text from the first room's name on. Before 5.7.0 the
             # opening printed no room, and the boot look below supplies it.
-            room = ((r.get("world") or {}).get("location") or {}).get("name")
+            # The opening record carries no `world` (5.7.1), so the room's heading
+            # is found by name: the first line that names a room the story creates.
             lines = text.splitlines()
-            if room and room in lines:
-                out.append("\n".join(lines[lines.index(room):]))
+            room = ((r.get("world") or {}).get("location") or {}).get("name")
+            names = {room} if room else story_room_names(game_dir)
+            head = next((i for i, line in enumerate(lines) if line.strip() in names), None)
+            if head is not None:
+                out.append("\n".join(lines[head:]))
+            else:
+                print("  walkthrough_output.txt: WARNING the opening's room heading was not found; opening left out")
             continue
         if r.get("turn") == 1 and cmd == "look" and not out:
             out.append(text)          # the boot look (before 5.7.0): the story's opening, no prompt
@@ -231,6 +237,18 @@ def write_walkthrough(game_dir: Path, doc: dict, records: list[dict]) -> None:
             out.append(f"> {cmd}\n{text}")
     (game_dir / "walkthrough_output.txt").write_text("\n\n".join(out) + "\n", encoding="utf-8")
     print(f"  walkthrough_output.txt: {len(out)} entries")
+
+
+def story_room_names(game_dir: Path) -> set[str]:
+    """The headings of the rooms the story creates, read from its source:
+    `create the Den, a room` and `create the Den` with `a room` on the next line.
+    A leading article is dropped, as the room heading drops it."""
+    names: set[str] = set()
+    for story in game_dir.glob("*.story"):
+        source = story.read_text(encoding="utf-8")
+        pattern = r"^create (?:the |an |a )?(.+?)(?:,\s*a room\b|\s*\n[ \t]+a room\b)"
+        names.update(m.group(1).strip() for m in re.finditer(pattern, source, re.MULTILINE))
+    return names
 
 
 def write_tests_html(game_dir: Path, title: str, records: list[dict], version: str,
